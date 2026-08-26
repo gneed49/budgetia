@@ -1,0 +1,35 @@
+{
+  "name": "budgetia",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:mobile",
+    "dev:mobile": "npm run web --workspace @budgetia/mobile",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "supabase:reset": "supabase db reset",
+    "supabase:test": "supabase test db",
+    "smoke:mcp": "node --env-file=.env scripts/smoke-mcp.mjs",
+    "check": "npm-run-all typecheck test",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm-run-all test:workspaces test:mcp",
+    "test:workspaces": "npm run test --workspaces --if-present",
+    "test:mcp": "vitest run supabase/functions",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5",
+    "supabase": "2.115.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

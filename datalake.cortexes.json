@@ -1,0 +1,1717 @@
+[{
+  "_id": {
+    "$oid": "66bc8785de4fb8eaa7081182"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T10:31:33.629Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc87d52f80e2635d1cfba3"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T10:32:53.968Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc8839fbb639986e839fdf"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T10:34:33.704Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc886ade4fb8eaa70aa3c1"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T10:35:22.919Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc898cfbb639986e848503"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T10:40:12.128Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc8a62de4fb8eaa70d378e"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T10:43:46.202Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc8404fbb639986e7a5f2d"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T10:16:36.905Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc855e2f80e2635d19b4fa"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T10:22:22.206Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc8bffde4fb8eaa70eb59c"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T10:50:39.780Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc8dc1de4fb8eaa712a847"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T10:58:09.546Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc8e68fbb639986e8d1926"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T11:00:56.900Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc8e6cfbb639986e8d199b"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T11:01:00.725Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc919afbb639986e92c24a"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T11:14:34.437Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc93802f80e2635d30b9f2"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T11:22:40.258Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9397fbb639986e95d5a7"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T11:23:03.876Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9c9ade4fb8eaa736062c"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T12:01:30.842Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca1142f80e2635d53ad71"
+  },
+  "ip": "91.165.232.122",
+  "datetime": {
+    "$date": "2024-08-14T12:20:36.245Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659b704ad298a4ecdad00fe",
+  "userEmail": "louisiane.lemaire@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc96e3de4fb8eaa727e629"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T11:37:07.794Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc97022f80e2635d38709c"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T11:37:38.782Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc976a2f80e2635d390557"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T11:39:22.289Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc97aa2f80e2635d3975d7"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T11:40:26.621Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9876fbb639986ea3b449"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T11:43:50.983Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc98ccde4fb8eaa72d1e02"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T11:45:16.768Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc999b2f80e2635d3f10c4"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T11:48:43.601Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9a11de4fb8eaa73008a1"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T11:50:41.017Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc967f2f80e2635d369550"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T11:35:27.105Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc98bdde4fb8eaa72d1ad9"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T11:45:01.413Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9960de4fb8eaa72e7467"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T11:47:44.245Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc99e5de4fb8eaa72fad2e"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T11:49:57.223Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9e12de4fb8eaa73c63a9"
+  },
+  "ip": "77.144.134.56",
+  "datetime": {
+    "$date": "2024-08-14T12:07:46.911Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-3.5",
+    "platform": "CHATGPT"
+  },
+  "userId": "6654788eceb9738eb74b18fe",
+  "userEmail": "oriane.airaudi@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9ebc2f80e2635d4ce573"
+  },
+  "ip": "77.144.134.56",
+  "datetime": {
+    "$date": "2024-08-14T12:10:36.729Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-3.5",
+    "platform": "CHATGPT"
+  },
+  "userId": "6654788eceb9738eb74b18fe",
+  "userEmail": "oriane.airaudi@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9f07fbb639986eb8f26e"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T12:11:51.437Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9f88de4fb8eaa740b9a0"
+  },
+  "ip": "90.60.118.124",
+  "datetime": {
+    "$date": "2024-08-14T12:14:00.979Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d063ad298a4ecd6bc84e",
+  "userEmail": "lara.perez-gorgol@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9f89de4fb8eaa740bd02"
+  },
+  "ip": "90.60.118.124",
+  "datetime": {
+    "$date": "2024-08-14T12:14:01.429Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d063ad298a4ecd6bc84e",
+  "userEmail": "lara.perez-gorgol@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bc9fe6fbb639986ebb177c"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T12:15:34.626Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca00c2f80e2635d50ee79"
+  },
+  "ip": "91.165.232.122",
+  "datetime": {
+    "$date": "2024-08-14T12:16:12.118Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659b704ad298a4ecdad00fe",
+  "userEmail": "louisiane.lemaire@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca27f2f80e2635d58674f"
+  },
+  "ip": "90.60.118.124",
+  "datetime": {
+    "$date": "2024-08-14T12:26:39.328Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d063ad298a4ecd6bc84e",
+  "userEmail": "lara.perez-gorgol@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca27f2f80e2635d586ab1"
+  },
+  "ip": "90.60.118.124",
+  "datetime": {
+    "$date": "2024-08-14T12:26:39.866Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d063ad298a4ecd6bc84e",
+  "userEmail": "lara.perez-gorgol@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca2c2fbb639986ec5557c"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T12:27:46.839Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca320de4fb8eaa74c587f"
+  },
+  "ip": "91.165.232.122",
+  "datetime": {
+    "$date": "2024-08-14T12:29:20.633Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659b704ad298a4ecdad00fe",
+  "userEmail": "louisiane.lemaire@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca38afbb639986ec6e5ef"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T12:31:06.747Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca3bb2f80e2635d5bfa30"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T12:31:55.486Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca5a6fbb639986ecb8092"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T12:40:06.175Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca8e1de4fb8eaa75cde82"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T12:53:53.744Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca917fbb639986ed534ba"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T12:54:47.528Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca96ade4fb8eaa75ea0d7"
+  },
+  "ip": "90.113.151.99",
+  "datetime": {
+    "$date": "2024-08-14T12:56:10.269Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655c9cff3fe379ce388fe91",
+  "userEmail": "jamal.kourta@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca973fbb639986ed65cf8"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T12:56:19.334Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcafd92f80e2635d7fe65f"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:23:37.530Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcaff8fbb639986eeada07"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:24:08.838Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb00c2f80e2635d805884"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:24:28.434Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb018de4fb8eaa773ebf2"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:24:40.164Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb0282f80e2635d809de4"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:24:56.432Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb055fbb639986eebd094"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:25:41.934Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb0732f80e2635d815826"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:26:11.262Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bca9d1de4fb8eaa7607894"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T12:57:53.236Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcaa4e2f80e2635d6da8ad"
+  },
+  "ip": "90.113.151.99",
+  "datetime": {
+    "$date": "2024-08-14T12:59:58.141Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655c9cff3fe379ce388fe91",
+  "userEmail": "jamal.kourta@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcaa91de4fb8eaa761a30b"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T13:01:05.396Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcaece2f80e2635d7c7266"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T13:19:10.656Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcaed1fbb639986ee6de6e"
+  },
+  "ip": "90.113.151.99",
+  "datetime": {
+    "$date": "2024-08-14T13:19:13.844Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655c9cff3fe379ce388fe91",
+  "userEmail": "jamal.kourta@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcafd9fbb639986eea2c87"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:23:37.772Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcaa48de4fb8eaa760feda"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T12:59:52.428Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcaa73fbb639986ed94688"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T13:00:35.900Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcaac1fbb639986eda1407"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T13:01:53.822Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcaad6de4fb8eaa7622a02"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T13:02:14.335Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcab26de4fb8eaa7631054"
+  },
+  "ip": "193.57.124.81",
+  "datetime": {
+    "$date": "2024-08-14T13:03:34.231Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-3.5",
+    "platform": "CHATGPT"
+  },
+  "userId": "665478f7ad298a4ecd3bad32",
+  "userEmail": "leo.bouchand@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcabc4fbb639986edd048c"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T13:06:12.274Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcad0dfbb639986ee02fe0"
+  },
+  "ip": "89.89.146.172",
+  "datetime": {
+    "$date": "2024-08-14T13:11:41.184Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-3.5",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599547ad298a4ecd834a59",
+  "userEmail": "salome.mathieux@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcad0fde4fb8eaa7683f56"
+  },
+  "ip": "89.89.146.172",
+  "datetime": {
+    "$date": "2024-08-14T13:11:43.095Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-3.5",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599547ad298a4ecd834a59",
+  "userEmail": "salome.mathieux@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcafbe2f80e2635d7f8cf5"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:23:10.855Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb0282f80e2635d80a3a7"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:24:56.728Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb04f2f80e2635d81291b"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:25:35.976Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb05bde4fb8eaa774723b"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T13:25:47.731Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb3382f80e2635d866a6e"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T13:38:00.654Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb364fbb639986ef27951"
+  },
+  "ip": "95.63.9.123",
+  "datetime": {
+    "$date": "2024-08-14T13:38:44.537Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66599127ceb9738eb7213e68",
+  "userEmail": "iliane.benneouala@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb3cefbb639986ef3de22"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T13:40:30.991Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb7a42f80e2635d90b4a6"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:56:52.939Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb7bdfbb639986efd182d"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:57:17.412Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb7fa2f80e2635d916a97"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:58:18.096Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb80f2f80e2635d91e555"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:58:39.594Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb8152f80e2635d91f84a"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:58:45.580Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb8262f80e2635d923813"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:59:02.169Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcaff8fbb639986eead367"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:24:08.606Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb00c2f80e2635d8052c1"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:24:28.248Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb016fbb639986eeb410a"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:24:38.114Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb0182f80e2635d8066c5"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:24:40.339Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb04cfbb639986eebc96e"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T13:25:32.877Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb054fbb639986eebcad1"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T13:25:40.468Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb07ede4fb8eaa7749e39"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:26:22.860Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb091fbb639986eec2b07"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T13:26:41.591Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb0ebde4fb8eaa77595ca"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:28:11.508Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb1582f80e2635d82c234"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T13:30:00.766Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb1ed2f80e2635d8400a6"
+  },
+  "ip": "90.120.121.29",
+  "datetime": {
+    "$date": "2024-08-14T13:32:29.904Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "66547985f3fe379ce3b5efff",
+  "userEmail": "noemi.bouaki@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb325de4fb8eaa77a1d69"
+  },
+  "ip": "91.165.232.122",
+  "datetime": {
+    "$date": "2024-08-14T13:37:41.460Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659b704ad298a4ecdad00fe",
+  "userEmail": "louisiane.lemaire@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb356de4fb8eaa77a79ab"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T13:38:30.087Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb3922f80e2635d873f69"
+  },
+  "ip": "37.66.6.175",
+  "datetime": {
+    "$date": "2024-08-14T13:39:30.014Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659995eceb9738eb776c926",
+  "userEmail": "clementine.maurier@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb39a2f80e2635d8753f9"
+  },
+  "ip": "77.144.134.56",
+  "datetime": {
+    "$date": "2024-08-14T13:39:38.302Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-3.5",
+    "platform": "CHATGPT"
+  },
+  "userId": "6654788eceb9738eb74b18fe",
+  "userEmail": "oriane.airaudi@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb4e2de4fb8eaa77e2990"
+  },
+  "ip": "92.161.240.157",
+  "datetime": {
+    "$date": "2024-08-14T13:45:06.637Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "665478abceb9738eb74cba2c",
+  "userEmail": "violine.grand@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb6b02f80e2635d8d37ca"
+  },
+  "ip": "91.165.232.122",
+  "datetime": {
+    "$date": "2024-08-14T13:52:48.263Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6659b704ad298a4ecdad00fe",
+  "userEmail": "louisiane.lemaire@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb70dde4fb8eaa783e90f"
+  },
+  "ip": "92.161.240.157",
+  "datetime": {
+    "$date": "2024-08-14T13:54:21.503Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "665478abceb9738eb74cba2c",
+  "userEmail": "violine.grand@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb7a5fbb639986efcf531"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:56:53.321Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "66bcb7bdde4fb8eaa785cdc0"
+  },
+  "ip": "176.177.24.49",
+  "datetime": {
+    "$date": "2024-08-14T13:57:17.206Z"
+  },
+  "tag": "CHATGPT_PROMPT_SENT",
+  "payload": {
+    "model": "GPT-4o",
+    "platform": "CHATGPT"
+  },
+  "userId": "6655d06bceb9738eb76eb498",
+  "userEmail": "maxime.medan@inextenso-innovation.fr",
+  "__v": 0
+}

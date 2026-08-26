@@ -1,0 +1,461 @@
+begin;
+
+create extension if not exists pgtap with schema extensions;
+select plan(53);
+
+insert into auth.users (
+  id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data
+) values
+  (
+    '11111111-1111-4111-8111-111111111111',
+    'authenticated', 'authenticated', 'alice@budgetia.test', '', now(),
+    '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb
+  ),
+  (
+    '22222222-2222-4222-8222-222222222222',
+    'authenticated', 'authenticated', 'bob@budgetia.test', '', now(),
+    '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb
+  );
+
+select has_table('public', 'budget_spaces', 'budget spaces table exists');
+select has_table('public', 'budget_space_members', 'budget members table exists');
+select has_table('public', 'budget_invitations', 'budget invitations table exists');
+select has_table('public', 'categories', 'categories table exists');
+select has_table('public', 'expenses', 'expenses table exists');
+select has_table('public', 'budget_settings', 'budget settings table exists');
+
+select is(
+  (select count(*)::integer from public.budget_spaces
+   where kind = 'personal' and created_by = '11111111-1111-4111-8111-111111111111'),
+  1,
+  'signup creates exactly one personal budget space'
+);
+select is(
+  (select count(*)::integer from public.categories
+   where space_id = (
+     select id from public.budget_spaces
+     where kind = 'personal' and created_by = '11111111-1111-4111-8111-111111111111'
+   )),
+  7,
+  'signup creates six standard categories and one fallback category'
+);
+select is(
+  (select count(*)::integer from public.categories
+   where is_fallback
+     and space_id = (
+       select id from public.budget_spaces
+       where kind = 'personal' and created_by = '11111111-1111-4111-8111-111111111111'
+     )),
+  1,
+  'a personal budget has exactly one fallback category'
+);
+select is(
+  (select name from public.categories
+   where is_fallback
+     and space_id = (
+       select id from public.budget_spaces
+       where kind = 'personal' and created_by = '11111111-1111-4111-8111-111111111111'
+     )),
+  'Non classée',
+  'the fallback category is clearly named Non classée'
+);
+select is(
+  (select count(*)::integer from public.budget_settings
+   where space_id = (
+     select id from public.budget_spaces
+     where kind = 'personal' and created_by = '11111111-1111-4111-8111-111111111111'
+   )),
+  1,
+  'signup creates settings for the personal space'
+);
+
+select set_config(
+  'test.alice_space_id',
+  (select id::text from public.budget_spaces
+   where kind = 'personal' and created_by = '11111111-1111-4111-8111-111111111111'),
+  true
+);
+select set_config(
+  'test.bob_space_id',
+  (select id::text from public.budget_spaces
+   where kind = 'personal' and created_by = '22222222-2222-4222-8222-222222222222'),
+  true
+);
+select set_config(
+  'test.bob_fallback_id',
+  (select id::text from public.categories
+   where is_fallback
+     and space_id = (
+       select id from public.budget_spaces
+       where kind = 'personal' and created_by = '22222222-2222-4222-8222-222222222222'
+     )),
+  true
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","email":"alice@budgetia.test"}',
+  true
+);
+
+select is(
+  (select count(*)::integer from public.budget_spaces),
+  1,
+  'RLS exposes only Alice personal space before sharing'
+);
+
+select lives_ok(
+  $$select public.create_budgetia_expense(
+    1250,
+    (select id from public.categories where name = 'Alimentation'),
+    'Marché', '2026-08-26', 'mobile', 'retry-safe-1', null
+  )$$,
+  'Alice can create a personal expense'
+);
+select is(
+  (
+    select (public.create_budgetia_expense(
+      1250,
+      (select id from public.categories where name = 'Alimentation'),
+      'Marché', '2026-08-26', 'mobile', 'retry-safe-1', null
+    )).id::text
+  ),
+  (select id::text from public.expenses where request_id = 'retry-safe-1'),
+  'expense retries return the existing row'
+);
+select is(
+  (select count(*)::integer from public.expenses where request_id = 'retry-safe-1'),
+  1,
+  'expense retries do not duplicate data'
+);
+select is(
+  (public.get_budgetia_spending_summary('month', '2026-08-26', null, null)->>'totalCents')::bigint,
+  1250::bigint,
+  'personal summary aggregates the personal expense'
+);
+
+select throws_ok(
+  $$delete from public.categories where is_fallback$$,
+  '22023',
+  null,
+  'the fallback category cannot be deleted directly'
+);
+
+insert into public.categories (space_id, name, color, icon)
+values
+  (current_setting('test.alice_space_id')::uuid, 'À modifier', '#52B788', 'create-outline'),
+  (current_setting('test.alice_space_id')::uuid, 'À transférer', '#F46F61', 'swap-horizontal-outline'),
+  (current_setting('test.alice_space_id')::uuid, 'À purger', '#26364D', 'trash-outline');
+
+insert into public.expenses (
+  space_id, amount_cents, category_id, note, spent_at, source, request_id
+)
+values
+  (
+    current_setting('test.alice_space_id')::uuid,
+    100,
+    (select id from public.categories where name = 'À modifier'),
+    'À déplacer pendant la modification',
+    '2025-01-01',
+    'mobile',
+    'category-update-source'
+  ),
+  (
+    current_setting('test.alice_space_id')::uuid,
+    200,
+    (select id from public.categories where name = 'À transférer'),
+    'À conserver pendant la suppression',
+    '2025-01-02',
+    'mobile',
+    'category-delete-transfer'
+  ),
+  (
+    current_setting('test.alice_space_id')::uuid,
+    300,
+    (select id from public.categories where name = 'À purger'),
+    'À supprimer avec la catégorie',
+    '2025-01-03',
+    'mobile',
+    'category-delete-expenses'
+  );
+
+select lives_ok(
+  $$select public.update_budget_category(
+    (select id from public.categories where name = 'À modifier'),
+    'Catégorie éditée',
+    '#3478F6',
+    (select id from public.categories where is_fallback)
+  )$$,
+  'a category can be renamed and recolored while transferring its expenses'
+);
+select is(
+  (select name || ':' || color from public.categories where name = 'Catégorie éditée'),
+  'Catégorie éditée:#3478F6',
+  'category edits are persisted'
+);
+select is(
+  (select category_id from public.expenses where request_id = 'category-update-source'),
+  (select id from public.categories where is_fallback),
+  'editing with a transfer target moves existing expenses'
+);
+
+select lives_ok(
+  $$select public.delete_budget_category(
+    (select id from public.categories where name = 'À transférer'),
+    'transfer',
+    (select id from public.categories where is_fallback)
+  )$$,
+  'a category can be deleted after transferring its expenses'
+);
+select is(
+  (select count(*)::integer from public.categories where name = 'À transférer'),
+  0,
+  'delete with transfer removes the source category'
+);
+select is(
+  (select category_id from public.expenses where request_id = 'category-delete-transfer'),
+  (select id from public.categories where is_fallback),
+  'delete with transfer preserves and reclassifies the expense'
+);
+
+select lives_ok(
+  $$select public.delete_budget_category(
+    (select id from public.categories where name = 'À purger'),
+    'delete_expenses',
+    null
+  )$$,
+  'a category can be deleted together with its expenses'
+);
+select is(
+  (
+    (select count(*) from public.categories where name = 'À purger')
+    +
+    (select count(*) from public.expenses where request_id = 'category-delete-expenses')
+  )::integer,
+  0,
+  'delete_expenses removes both category and dependent expenses'
+);
+select is(
+  (select usage.expense_count
+   from public.get_budget_category_usage(current_setting('test.alice_space_id')::uuid) as usage
+   where usage.category_id = (select id from public.categories where is_fallback)),
+  2::bigint,
+  'category usage reports the transferred expense count'
+);
+select is(
+  (select usage.total_cents
+   from public.get_budget_category_usage(current_setting('test.alice_space_id')::uuid) as usage
+   where usage.category_id = (select id from public.categories where is_fallback)),
+  300::bigint,
+  'category usage reports the transferred amount'
+);
+select throws_ok(
+  $$select public.delete_budget_category(
+    (select id from public.categories where is_fallback),
+    'delete_expenses',
+    null
+  )$$,
+  '22023',
+  null,
+  'the fallback category cannot be deleted through the lifecycle API'
+);
+select throws_ok(
+  $$select public.update_budget_category(
+    (select id from public.categories where name = 'Catégorie éditée'),
+    null,
+    null,
+    current_setting('test.bob_fallback_id')::uuid
+  )$$,
+  '22023',
+  null,
+  'expenses cannot be transferred to a category in another budget'
+);
+select throws_ok(
+  $$select public.update_budget_category(
+    current_setting('test.bob_fallback_id')::uuid,
+    'Interdit',
+    null,
+    null
+  )$$,
+  '42501',
+  null,
+  'a member cannot edit a category from an inaccessible budget'
+);
+
+select lives_ok(
+  $$select public.create_shared_budget('Budget du couple')$$,
+  'Alice can create a shared budget'
+);
+select is(
+  (select count(*)::integer from public.budget_spaces),
+  2,
+  'Alice sees her personal and shared spaces'
+);
+select is(
+  (select count(*)::integer from public.categories
+   where space_id = (select id from public.budget_spaces where name = 'Budget du couple')),
+  7,
+  'a shared budget starts with six standard categories and one fallback'
+);
+select is(
+  (select count(*)::integer from public.categories
+   where is_fallback
+     and space_id = (select id from public.budget_spaces where name = 'Budget du couple')),
+  1,
+  'a shared budget has exactly one fallback category'
+);
+select lives_ok(
+  $$select public.invite_budget_member(
+    (select id from public.budget_spaces where name = 'Budget du couple'),
+    'bob@budgetia.test'
+  )$$,
+  'Alice can invite Bob to the shared budget'
+);
+select is(
+  (select count(*)::integer from public.budget_invitations where status = 'pending'),
+  1,
+  'the sender can see the pending invitation'
+);
+select throws_ok(
+  $$select public.accept_budget_invitation(
+    (select id from public.budget_invitations where email = 'bob@budgetia.test')
+  )$$,
+  '42501',
+  null,
+  'the sender cannot accept an invitation addressed to someone else'
+);
+
+select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","email":"bob@budgetia.test"}',
+  true
+);
+
+select is(
+  (select count(*)::integer from public.budget_spaces),
+  1,
+  'Bob sees only his personal space before accepting'
+);
+select is(
+  (select count(*)::integer from public.budget_invitations where status = 'pending'),
+  1,
+  'Bob sees the invitation addressed to his authenticated email'
+);
+select is(
+  (select space_name from public.list_budget_invitations()),
+  'Budget du couple',
+  'the recipient sees the invited budget name without becoming a member'
+);
+select is(
+  (select count(*)::integer from public.categories
+   where space_id = (
+     select id from public.budget_spaces where created_by = '11111111-1111-4111-8111-111111111111'
+   )),
+  0,
+  'Bob cannot see Alice personal categories'
+);
+select throws_ok(
+  $$select public.create_budgetia_expense(
+    100,
+    '00000000-0000-4000-8000-000000000000',
+    'Interdit', '2026-08-26', 'mobile', 'cross-space',
+    current_setting('test.alice_space_id')::uuid
+  )$$,
+  '42501',
+  null,
+  'Bob cannot write into Alice personal space'
+);
+select lives_ok(
+  $$select public.accept_budget_invitation(
+    (select id from public.budget_invitations where email = 'bob@budgetia.test')
+  )$$,
+  'Bob can accept his invitation'
+);
+select is(
+  (select count(*)::integer from public.budget_spaces),
+  2,
+  'Bob sees his personal and the shared space after accepting'
+);
+select is(
+  (select count(*)::integer from public.categories
+   where space_id = (select id from public.budget_spaces where name = 'Budget du couple')),
+  7,
+  'Bob can read the shared categories'
+);
+select lives_ok(
+  $$select public.create_budgetia_expense(
+    2300,
+    (select id from public.categories
+     where name = 'Alimentation'
+       and space_id = (select id from public.budget_spaces where name = 'Budget du couple')),
+    'Courses communes', '2026-08-26', 'mobile', 'shared-bob-1',
+    (select id from public.budget_spaces where name = 'Budget du couple')
+  )$$,
+  'Bob can add an expense to the shared budget'
+);
+select is(
+  (public.get_budgetia_spending_summary(
+    'month', '2026-08-26', null,
+    (select id from public.budget_spaces where name = 'Budget du couple')
+  )->>'totalCents')::bigint,
+  2300::bigint,
+  'Bob reads the shared total'
+);
+
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","email":"alice@budgetia.test"}',
+  true
+);
+
+select is(
+  (public.get_budgetia_spending_summary(
+    'month', '2026-08-26', null,
+    (select id from public.budget_spaces where name = 'Budget du couple')
+  )->>'totalCents')::bigint,
+  2300::bigint,
+  'Alice sees the expense added by Bob to their shared space'
+);
+select is(
+  (public.get_budgetia_spending_summary('month', '2026-08-26', null, null)->>'totalCents')::bigint,
+  1250::bigint,
+  'Alice personal summary remains isolated from the shared budget'
+);
+select is(
+  jsonb_array_length(
+    public.get_budgetia_spending_summary('year', '2026-08-26', null, null)->'series'
+  ),
+  12,
+  'year summary still returns twelve chart points'
+);
+select throws_ok(
+  $$insert into public.categories (space_id, user_id, name, color, icon)
+    values (
+      current_setting('test.bob_space_id')::uuid,
+      '11111111-1111-4111-8111-111111111111',
+      'Interdit', '#52B788', 'lock-closed-outline'
+    )$$,
+  '42501',
+  null,
+  'RLS prevents a category write into another personal space'
+);
+
+reset role;
+
+select has_index(
+  'public', 'expenses', 'expenses_space_spent_at_idx',
+  'expense date queries have a space-aware index'
+);
+select has_index(
+  'public', 'budget_space_members', 'budget_space_members_user_id_idx',
+  'membership RLS lookups have a user index'
+);
+
+select * from finish();
+rollback;

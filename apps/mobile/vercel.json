@@ -1,0 +1,7 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/oauth/consent", "destination": "/index.html" },
+    { "source": "/oauth/consent/", "destination": "/index.html" }
+  ]
+}

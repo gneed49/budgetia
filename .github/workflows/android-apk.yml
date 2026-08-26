@@ -1,0 +1,86 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# The build only needs to read the source. It never deploys Supabase or uses a
+# database connection string.
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    name: Build installable Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # These are intentionally limited to the URL and publishable client key.
+      # Their values are compiled into a mobile app, so a service_role/secret
+      # key must never be substituted here.
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify public mobile configuration
+        run: |
+          test -n "$EXPO_PUBLIC_SUPABASE_URL"
+          test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+
+      - name: Check TypeScript and contracts
+        run: npm run check
+
+      - name: Generate Android project
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build signed debug APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleDebug
+
+      - name: Calculate APK checksum
+        id: checksum
+        run: echo "sha256=$(sha256sum apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK
+        id: apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: budgetia-android-apk-${{ github.run_number }}
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish download link
+        run: |
+          {
+            echo "## APK Android"
+            echo
+            echo "[Télécharger l’APK Budgetia](${{ steps.apk.outputs.artifact-url }})"
+            echo
+            echo "- Build: \`${{ github.sha }}\`"
+            echo "- SHA-256: \`${{ steps.checksum.outputs.sha256 }}\`"
+            echo "- L’artefact est conservé 30 jours."
+          } >> "$GITHUB_STEP_SUMMARY"

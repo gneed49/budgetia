@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Budgetia",
+    "slug": "budgetia",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "budgetia",
+    "splash": {
+      "backgroundColor": "#FBFCFB"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.budgetia.mobile"
+    },
+    "android": {
+      "package": "com.budgetia.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#FBFCFB"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "name": "Budgetia",
+      "shortName": "Budgetia",
+      "backgroundColor": "#FBFCFB",
+      "themeColor": "#169B68"
+    },
+    "plugins": ["expo-secure-store"]
+  }
+}
