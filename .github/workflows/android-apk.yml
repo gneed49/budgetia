@@ -44,11 +44,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify public mobile configuration
-        run: |
-          test -n "$EXPO_PUBLIC_SUPABASE_URL"
-          test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
-
       - name: Check TypeScript and contracts
         run: npm run check
 

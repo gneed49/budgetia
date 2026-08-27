@@ -117,9 +117,9 @@ Déployez `apps/mobile/dist`, avec les deux variables `EXPO_PUBLIC_SUPABASE_*` d
 
 ## APK Android et GitHub Actions
 
-Chaque push sur `main` exécute le workflow **Android APK**. Il vérifie les contrats TypeScript, génère le projet Android Expo puis publie un APK de debug signé, installable sur un appareil Android. Le lien de téléchargement et le SHA-256 apparaissent dans le résumé du run GitHub Actions ; l’artefact est conservé 30 jours.
+Chaque push sur `main` exécute le workflow **Android APK**. Il vérifie les contrats TypeScript, génère le projet Android Expo puis publie un APK de debug signé, installable sur un appareil Android. Le lien de téléchargement et le SHA-256 apparaissent dans le résumé du run GitHub Actions ; l’artefact est conservé 30 jours. Le build reste disponible même avant la configuration de Supabase : l’app affiche alors explicitement qu’elle doit être configurée, au lieu de se connecter à une base par défaut.
 
-Avant le premier push, ajoutez ces deux valeurs dans **GitHub → Settings → Secrets and variables → Actions → Secrets** du dépôt :
+Pour que l’APK accède au projet Supabase de production, ajoutez ces deux valeurs dans **GitHub → Settings → Secrets and variables → Actions → Secrets** du dépôt, puis relancez le workflow ou poussez un commit :
 
 | Secret GitHub | Valeur autorisée |
 | --- | --- |
