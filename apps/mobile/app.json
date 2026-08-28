@@ -2,32 +2,42 @@
   "expo": {
     "name": "Budgetia",
     "slug": "budgetia",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "automatic",
     "scheme": "budgetia",
-    "splash": {
-      "backgroundColor": "#FBFCFB"
-    },
+    "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.budgetia.mobile"
     },
     "android": {
       "package": "com.budgetia.mobile",
+      "versionCode": 1,
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FBFCFB"
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "web": {
       "bundler": "metro",
       "name": "Budgetia",
       "shortName": "Budgetia",
+      "favicon": "./assets/favicon.png",
       "backgroundColor": "#FBFCFB",
       "themeColor": "#169B68"
     },
-    "plugins": ["expo-secure-store"]
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/adaptive-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#FBFCFB"
+        }
+      ]
+    ]
   }
 }

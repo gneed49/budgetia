@@ -7,6 +7,8 @@ Budgetia est une application Expo / React Native pour saisir des dépenses, cré
 - authentification e-mail / mot de passe et synchronisation multi-appareils ;
 - espace personnel automatique et espaces communs pour un couple ou un foyer ;
 - invitation par adresse e-mail, acceptation explicite et sélecteur de budget ;
+- gestion du foyer par le propriétaire : renommage, révocation d’invitation, retrait d’un membre, transfert de propriété et suppression protégée ;
+- départ volontaire d’un membre sans effacer les dépenses communes ;
 - thème clair ou sombre persistant ;
 - accents Émeraude, Bleu, Violet ou Corail pour les actions principales ;
 - dépense avec montant, catégorie, note et date ;
@@ -20,6 +22,7 @@ Budgetia est une application Expo / React Native pour saisir des dépenses, cré
 - filtres multi-catégories sur les périodes passées ;
 - vue annuelle avec détail cliquable de chaque mois ;
 - historique filtrable et suppression d’une dépense ;
+- export CSV complet du budget sélectionné et suppression autonome du compte ;
 - MCP privé pour ajouter, lister et analyser les dépenses depuis ChatGPT ;
 - OAuth 2.1 Supabase avec PKCE et écran de consentement Budgetia.
 
@@ -85,6 +88,7 @@ npx supabase link --project-ref votre_ref_projet
 npx supabase db push --dry-run
 npx supabase db push
 npx supabase functions deploy budgetia-mcp --no-verify-jwt
+npx supabase functions deploy delete-account
 ```
 
 `verify_jwt = false` est intentionnel pour le point d’entrée MCP : la fonction doit pouvoir renvoyer elle-même une réponse OAuth `401` avec `WWW-Authenticate`. Elle vérifie ensuite chaque Bearer token avec Supabase Auth avant tout accès, et les requêtes PostgreSQL restent soumises à la RLS.
@@ -115,9 +119,44 @@ npm run build:web --workspace @budgetia/mobile
 
 Déployez `apps/mobile/dist`, avec les deux variables `EXPO_PUBLIC_SUPABASE_*` du projet de production.
 
-## APK Android et GitHub Actions
+## Android avec Expo EAS et GitHub Actions
 
-Chaque push sur `main` exécute le workflow **Android APK**. Il vérifie les contrats TypeScript, génère le projet Android Expo puis publie un APK de debug signé, installable sur un appareil Android. Le lien de téléchargement et le SHA-256 apparaissent dans le résumé du run GitHub Actions ; l’artefact est conservé 30 jours. Le build reste disponible même avant la configuration de Supabase : l’app affiche alors explicitement qu’elle doit être configurée, au lieu de se connecter à une base par défaut.
+Budgetia est bien une application React Native, pilotée par Expo. Deux chemins de build coexistent :
+
+- **Android APK** construit gratuitement un APK de debug avec Expo Prebuild et Gradle à chaque push sur `main`. Le lien et le SHA-256 apparaissent dans le résumé GitHub Actions ;
+- **Android EAS release** utilise Expo EAS Build. Le profil `preview` produit un APK installable sur `main` et le profil `production` produit un AAB signé pour Google Play sur un tag `vX.Y.Z`.
+
+Le premier chemin reste un secours fonctionnel. Le second est la voie de distribution production : Expo conserve la clé de signature Android à distance et GitHub ne reçoit jamais le keystore. Le workflow EAS reste volontairement désactivé tant que le compte Expo et les credentials Android n’ont pas été initialisés.
+
+### Initialisation EAS, une seule fois
+
+Ces actions nécessitent la connexion humaine au compte Expo ; ne partagez jamais le jeton dans un message ou dans le dépôt.
+
+```bash
+cd apps/mobile
+npx eas-cli login
+npx eas-cli init
+npx eas-cli build --platform android --profile preview
+```
+
+Le premier build interactif crée ou sélectionne les credentials Android distants. Dans les environnements EAS `preview` et `production`, ajoutez ensuite :
+
+| Variable EAS | Valeur |
+| --- | --- |
+| `EXPO_PUBLIC_SUPABASE_URL` | URL HTTPS publique du projet Supabase |
+| `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | clé publishable Supabase à faibles privilèges |
+
+Ajoutez enfin dans **GitHub → Settings → Secrets and variables → Actions** :
+
+| Type | Nom | Valeur |
+| --- | --- | --- |
+| Secret | `EXPO_TOKEN` | jeton d’accès personnel Expo, jamais commité |
+| Variable | `EAS_PROJECT_ID` | UUID public du projet affiché après `eas init` |
+| Variable | `EAS_PRODUCTION_ENABLED` | `true` uniquement après un premier build EAS réussi |
+
+Le workflow relie temporairement le projet avec `EAS_PROJECT_ID`, attend la fin du build, télécharge le binaire puis publie à la fois le lien GitHub et le lien EAS dans le résumé. Un tag `v1.0.0` doit correspondre à `expo.version: 1.0.0` pour créer la GitHub Release.
+
+### APK Gradle de secours
 
 Pour que l’APK accède au projet Supabase de production, ajoutez ces deux valeurs dans **GitHub → Settings → Secrets and variables → Actions → Secrets** du dépôt, puis relancez le workflow ou poussez un commit :
 
@@ -126,7 +165,7 @@ Pour que l’APK accède au projet Supabase de production, ajoutez ces deux vale
 | `EXPO_PUBLIC_SUPABASE_URL` | URL HTTPS publique du projet Supabase |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clé publishable Supabase (ou `anon` legacy à privilèges faibles) |
 
-Une URL de projet et une clé publishable sont intégrées dans l’APK par conception : elles ne donnent pas accès aux dépenses sans session utilisateur et politiques RLS. Ne stockez jamais `service_role`, `sb_secret_*`, `SUPABASE_DB_URL`, une chaîne PostgreSQL, un mot de passe, ni une clé de signature Android dans ces secrets ou dans le dépôt.
+Une URL de projet et une clé publishable sont intégrées dans l’APK par conception : elles ne donnent pas accès aux dépenses sans session utilisateur et politiques RLS. Ne stockez jamais `service_role`, `sb_secret_*`, `SUPABASE_DB_URL`, une chaîne PostgreSQL, un mot de passe, une clé de signature Android ou `EXPO_TOKEN` dans l’application ou dans le dépôt.
 
 ## Connexion à ChatGPT
 
@@ -179,6 +218,7 @@ Le serveur accepte le protocole MCP `2025-11-25` et la révision stateless `2026
 npm run check
 npm run build
 npm run supabase:test
+npm run smoke:local
 ```
 
 - Vitest couvre les calculs de période et le contrat MCP.
@@ -194,6 +234,9 @@ apps/mobile/                     application Expo, auth et écran OAuth
 packages/domain/                 périodes, montants et types partagés
 supabase/migrations/             schéma PostgreSQL, fonctions et RLS
 supabase/functions/budgetia-mcp/ MCP HTTP pour ChatGPT
+supabase/functions/delete-account/ suppression authentifiée du compte
 supabase/tests/database/         tests pgTAP de sécurité et données
+apps/mobile/eas.json             profils APK de test et AAB de production
+docs/PRODUCTION_CHECKLIST.md     portes de mise en production
 docs/design/                     concepts visuels
 ```

@@ -33,6 +33,20 @@ export interface BudgetInvitation {
   createdAt: string;
 }
 
+export interface BudgetSpaceMember {
+  userId: string;
+  email: string;
+  role: "owner" | "editor";
+  joinedAt: string;
+}
+
+export interface AccountDeletionImpact {
+  personalExpenseCount: number;
+  sharedMembershipCount: number;
+  ownedSharedSpaceCount: number;
+  sharedExpenseCountKept: number;
+}
+
 export interface CategoryUsage {
   categoryId: string;
   expenseCount: number;
@@ -71,6 +85,13 @@ interface BudgetInvitationRow {
   status: "pending" | "accepted" | "revoked";
   created_at: string;
   space_name: string;
+}
+
+interface BudgetSpaceMemberRpcRow {
+  user_id: string;
+  email: string;
+  role: "owner" | "editor";
+  joined_at: string;
 }
 
 interface CategoryRow {
@@ -283,6 +304,112 @@ export async function acceptBudgetInvitation(
   return mapSpace(data as BudgetSpaceRow, "editor");
 }
 
+export async function listBudgetSpaceMembers(
+  spaceId: string,
+): Promise<BudgetSpaceMember[]> {
+  const { data, error } = await supabase.rpc("list_budget_space_members", {
+    p_space_id: spaceId,
+  });
+  if (error) throw toApiError(error, "Impossible de charger les membres du budget.");
+  return ((data ?? []) as BudgetSpaceMemberRpcRow[]).map((row) => ({
+    userId: row.user_id,
+    email: row.email,
+    role: row.role,
+    joinedAt: row.joined_at,
+  }));
+}
+
+export async function renameSharedBudget(
+  space: BudgetSpace,
+  name: string,
+): Promise<BudgetSpace> {
+  const { data, error } = await supabase.rpc("rename_shared_budget", {
+    p_space_id: space.id,
+    p_name: name.trim(),
+  });
+  if (error || !data) {
+    throw toApiError(
+      error ?? { message: "missing budget" },
+      "Impossible de renommer le budget.",
+    );
+  }
+  return mapSpace(data as BudgetSpaceRow, space.role);
+}
+
+export async function transferBudgetOwnership(
+  spaceId: string,
+  newOwnerUserId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("transfer_budget_space_ownership", {
+    p_space_id: spaceId,
+    p_new_owner_user_id: newOwnerUserId,
+  });
+  if (error) throw toApiError(error, "Impossible de transférer la propriété.");
+}
+
+export async function removeBudgetMember(
+  spaceId: string,
+  memberUserId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("remove_budget_space_member", {
+    p_space_id: spaceId,
+    p_member_user_id: memberUserId,
+  });
+  if (error) throw toApiError(error, "Impossible de retirer ce membre.");
+}
+
+export async function leaveSharedBudget(spaceId: string): Promise<void> {
+  const { error } = await supabase.rpc("leave_shared_budget", {
+    p_space_id: spaceId,
+  });
+  if (error) throw toApiError(error, "Impossible de quitter ce budget.");
+}
+
+export async function deleteSharedBudget(
+  spaceId: string,
+  confirmation: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("delete_shared_budget", {
+    p_space_id: spaceId,
+    p_confirmation: confirmation,
+  });
+  if (error) throw toApiError(error, "Impossible de supprimer ce budget.");
+}
+
+export async function revokeBudgetInvitation(invitationId: string): Promise<void> {
+  const { error } = await supabase.rpc("revoke_budget_invitation", {
+    p_invitation_id: invitationId,
+  });
+  if (error) throw toApiError(error, "Impossible d’annuler cette invitation.");
+}
+
+export async function getAccountDeletionImpact(): Promise<AccountDeletionImpact> {
+  const { data, error } = await supabase.rpc("get_account_deletion_impact");
+  if (error || !data) {
+    throw toApiError(
+      error ?? { message: "missing deletion impact" },
+      "Impossible de préparer la suppression du compte.",
+    );
+  }
+  const value = data as Record<string, unknown>;
+  return {
+    personalExpenseCount: Number(value.personalExpenseCount ?? 0),
+    sharedMembershipCount: Number(value.sharedMembershipCount ?? 0),
+    ownedSharedSpaceCount: Number(value.ownedSharedSpaceCount ?? 0),
+    sharedExpenseCountKept: Number(value.sharedExpenseCountKept ?? 0),
+  };
+}
+
+export async function deleteCurrentAccount(): Promise<AccountDeletionImpact> {
+  const { data, error } = await supabase.functions.invoke("delete-account", {
+    body: { confirmation: "SUPPRIMER" },
+  });
+  if (error || !data?.deleted) {
+    throw new ApiError("La suppression du compte n’a pas pu être terminée.");
+  }
+  return data.impact as AccountDeletionImpact;
+}
+
 export class BudgetApi {
   constructor(readonly spaceId: string) {}
 
@@ -451,6 +578,25 @@ export class BudgetApi {
     return ((data ?? []) as unknown as ExpenseRow[]).map(mapExpense);
   }
 
+  async listAllExpenses(): Promise<Expense[]> {
+    const pageSize = 1000;
+    const result: Expense[] = [];
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await supabase
+        .from("expenses")
+        .select(EXPENSE_COLUMNS)
+        .eq("space_id", this.spaceId)
+        .order("spent_at", { ascending: false })
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(offset, offset + pageSize - 1);
+      if (error) throw toApiError(error, "Impossible d’exporter les dépenses.");
+      const page = ((data ?? []) as unknown as ExpenseRow[]).map(mapExpense);
+      result.push(...page);
+      if (page.length < pageSize) return result;
+    }
+  }
+
   private async getExpense(id: string): Promise<Expense> {
     const { data, error } = await supabase
       .from("expenses")
@@ -535,21 +681,10 @@ export class BudgetApi {
 
   async setMonthlyBudget(amount: string): Promise<number> {
     const monthlyBudgetCents = parseMoneyToCents(amount);
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-      throw new ApiError("Votre session a expiré. Reconnectez-vous.", 401);
-    }
     const { data, error } = await supabase
       .from("budget_settings")
-      .upsert(
-        {
-          user_id: userData.user.id,
-          space_id: this.spaceId,
-          currency: "EUR",
-          monthly_budget_cents: monthlyBudgetCents,
-        },
-        { onConflict: "space_id" },
-      )
+      .update({ monthly_budget_cents: monthlyBudgetCents })
+      .eq("space_id", this.spaceId)
       .select("monthly_budget_cents")
       .single();
     if (error) throw toApiError(error, "Impossible d’enregistrer le budget.");

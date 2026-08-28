@@ -142,6 +142,7 @@ function BudgetiaWorkspace(props: {
     screen = (
       <SettingsScreen
         api={api}
+        userId={props.session.user.id}
         userEmail={props.session.user.email ?? "Compte Budgetia"}
         categories={overview.categories}
         settings={overview.settings}

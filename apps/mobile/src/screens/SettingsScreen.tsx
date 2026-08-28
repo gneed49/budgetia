@@ -17,13 +17,16 @@ import {
   createSharedBudget,
   inviteBudgetMember,
   listBudgetInvitations,
+  revokeBudgetInvitation,
   type BudgetInvitation,
   type BudgetSettings,
   type BudgetSpace,
   type CategoryUsage,
 } from "../api";
 import { CategoryManagerModal } from "../components/CategoryManagerModal";
+import { DataPrivacySection } from "../components/DataPrivacySection";
 import { ErrorBanner } from "../components/Feedback";
+import { SharedBudgetManager } from "../components/SharedBudgetManager";
 import { formatMoney } from "../format";
 import { budgetiaMcpUrl } from "../supabase";
 import {
@@ -46,6 +49,7 @@ const extraCategoryColors = [
 
 export function SettingsScreen(props: {
   api: BudgetApi;
+  userId: string;
   userEmail: string;
   categories: Category[];
   settings: BudgetSettings | null;
@@ -125,6 +129,14 @@ export function SettingsScreen(props: {
     setError(null);
     setMessage(null);
   }
+
+  const handleFeedback = useCallback(
+    (nextMessage: string | null, nextError: string | null) => {
+      setMessage(nextMessage);
+      setError(nextError);
+    },
+    [],
+  );
 
   async function saveBudget(): Promise<void> {
     setSavingBudget(true);
@@ -210,6 +222,20 @@ export function SettingsScreen(props: {
       setMessage(`Vous avez rejoint « ${space.name} ».`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Invitation indisponible.");
+    } finally {
+      setSavingShare(false);
+    }
+  }
+
+  async function revokeInvitation(invitation: BudgetInvitation): Promise<void> {
+    setSavingShare(true);
+    clearFeedback();
+    try {
+      await revokeBudgetInvitation(invitation.id);
+      await refreshInvitations();
+      setMessage(`L’invitation envoyée à ${invitation.email} a été annulée.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Annulation impossible.");
     } finally {
       setSavingShare(false);
     }
@@ -334,7 +360,7 @@ export function SettingsScreen(props: {
           <Text style={styles.outlineButtonText}>Créer un budget commun</Text>
         </Pressable>
 
-        {props.activeSpace.kind === "shared" ? (
+        {props.activeSpace.kind === "shared" && props.activeSpace.role === "owner" ? (
           <View style={styles.inviteBox}>
             <Text style={styles.label}>Inviter dans « {props.activeSpace.name} »</Text>
             <TextInput
@@ -385,9 +411,30 @@ export function SettingsScreen(props: {
         ) : null}
 
         {sentInvitations.length ? (
-          <Text style={styles.pendingCopy}>
-            {sentInvitations.length} invitation{sentInvitations.length > 1 ? "s" : ""} en attente : {sentInvitations.map((item) => item.email).join(", ")}.
-          </Text>
+          <View style={styles.invitationList}>
+            <Text style={styles.label}>Invitations envoyées</Text>
+            {sentInvitations.map((invitation) => (
+              <View key={invitation.id} style={styles.sentInvitationRow}>
+                <Text style={styles.pendingCopy} numberOfLines={1}>{invitation.email}</Text>
+                <Pressable
+                  disabled={savingShare}
+                  onPress={() => void revokeInvitation(invitation)}
+                  style={styles.revokeButton}
+                >
+                  <Text style={styles.revokeText}>Annuler</Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {props.activeSpace.kind === "shared" ? (
+          <SharedBudgetManager
+            space={props.activeSpace}
+            currentUserId={props.userId}
+            onChanged={props.onSpacesChanged}
+            onFeedback={handleFeedback}
+          />
         ) : null}
       </View>
 
@@ -528,6 +575,12 @@ export function SettingsScreen(props: {
             ChatGPT peut lister vos espaces et cibler explicitement le budget personnel ou commun avant toute écriture.
           </Text>
         </View>
+        <DataPrivacySection
+          api={props.api}
+          spaceName={props.activeSpace.name}
+          onDeleted={props.onSignOut}
+          onFeedback={handleFeedback}
+        />
         <Pressable
           accessibilityRole="button"
           onPress={props.onSignOut}
@@ -596,6 +649,9 @@ const createStyles = (colors: ThemeColors) =>
     acceptButton: { minHeight: 38, justifyContent: "center", paddingHorizontal: spacing.sm, borderRadius: radii.sm, backgroundColor: colors.mintDark },
     acceptButtonText: { color: colors.onPrimary, fontSize: 12, fontWeight: "900" },
     pendingCopy: { color: colors.muted, fontSize: 11, lineHeight: 17 },
+    sentInvitationRow: { minHeight: 40, flexDirection: "row", alignItems: "center", gap: spacing.xs },
+    revokeButton: { minHeight: 34, justifyContent: "center", paddingHorizontal: spacing.sm, borderWidth: 1, borderColor: colors.coral, borderRadius: radii.round },
+    revokeText: { color: colors.coral, fontSize: 11, fontWeight: "900" },
     inlineField: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
     flexInput: { flex: 1, fontVariant: ["tabular-nums"] },
     currency: { color: colors.ink, fontSize: 18, fontWeight: "800" },

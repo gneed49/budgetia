@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(53);
+select plan(79);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -138,11 +138,9 @@ select is(
   'personal summary aggregates the personal expense'
 );
 
-select throws_ok(
-  $$delete from public.categories where is_fallback$$,
-  '22023',
-  null,
-  'the fallback category cannot be deleted directly'
+select is_empty(
+  $$delete from public.categories where is_fallback returning id$$,
+  'RLS prevents direct deletion of the fallback category'
 );
 
 insert into public.categories (space_id, name, color, icon)
@@ -446,7 +444,229 @@ select throws_ok(
   'RLS prevents a category write into another personal space'
 );
 
+select is(
+  (select count(*)::integer
+   from public.list_budget_space_members(
+     (select id from public.budget_spaces where name = 'Budget du couple')
+   )),
+  2,
+  'both members can be listed from inside the shared budget'
+);
+select lives_ok(
+  $$select public.create_budgetia_expense(
+    980,
+    (select id from public.categories
+     where name = 'Logement'
+       and space_id = (select id from public.budget_spaces where name = 'Budget du couple')),
+    'Dépense conservée', '2026-08-27', 'mobile', 'shared-alice-kept',
+    (select id from public.budget_spaces where name = 'Budget du couple')
+  )$$,
+  'Alice can add a shared expense before deleting her account'
+);
+select is(
+  (public.get_account_deletion_impact()->>'sharedExpenseCountKept')::integer,
+  1,
+  'the deletion preflight identifies shared expenses that will be anonymized'
+);
+select throws_ok(
+  $$select public.leave_shared_budget(
+    (select id from public.budget_spaces where name = 'Budget du couple')
+  )$$,
+  '22023',
+  null,
+  'an owner cannot leave without transferring ownership'
+);
+
+select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","email":"bob@budgetia.test"}',
+  true
+);
+select throws_ok(
+  $$select public.invite_budget_member(
+    (select id from public.budget_spaces where name = 'Budget du couple'),
+    'charlie@budgetia.test'
+  )$$,
+  '42501',
+  null,
+  'an editor cannot invite another person'
+);
+
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","email":"alice@budgetia.test"}',
+  true
+);
+select lives_ok(
+  $$select public.transfer_budget_space_ownership(
+    (select id from public.budget_spaces where name = 'Budget du couple'),
+    '22222222-2222-4222-8222-222222222222'
+  )$$,
+  'Alice can transfer ownership to Bob'
+);
+select is(
+  (select role from public.list_budget_space_members(
+     (select id from public.budget_spaces where name = 'Budget du couple')
+   ) where user_id = '22222222-2222-4222-8222-222222222222'),
+  'owner',
+  'Bob becomes the only owner'
+);
+
+select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","email":"bob@budgetia.test"}',
+  true
+);
+select lives_ok(
+  $$select public.transfer_budget_space_ownership(
+    (select id from public.budget_spaces where name = 'Budget du couple'),
+    '11111111-1111-4111-8111-111111111111'
+  )$$,
+  'Bob can transfer ownership back to Alice'
+);
+select is(
+  (select role from public.list_budget_space_members(
+     (select id from public.budget_spaces where name = 'Budget du couple')
+   ) where user_id = '11111111-1111-4111-8111-111111111111'),
+  'owner',
+  'Alice becomes the only owner again'
+);
+
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","email":"alice@budgetia.test"}',
+  true
+);
+select lives_ok(
+  $$select public.create_shared_budget('Gestion membres')$$,
+  'Alice can create a second shared budget for lifecycle checks'
+);
+select lives_ok(
+  $$select public.invite_budget_member(
+    (select id from public.budget_spaces where name = 'Gestion membres'),
+    'bob@budgetia.test'
+  )$$,
+  'Alice can invite Bob to the lifecycle budget'
+);
+select lives_ok(
+  $$select public.revoke_budget_invitation(
+    (select id from public.budget_invitations
+     where space_id = (select id from public.budget_spaces where name = 'Gestion membres')
+       and status = 'pending')
+  )$$,
+  'Alice can revoke a pending invitation'
+);
+select is(
+  (select status from public.budget_invitations
+   where space_id = (select id from public.budget_spaces where name = 'Gestion membres')
+   order by created_at desc limit 1),
+  'revoked',
+  'the invitation is visibly revoked'
+);
+select lives_ok(
+  $$select public.invite_budget_member(
+    (select id from public.budget_spaces where name = 'Gestion membres'),
+    'bob@budgetia.test'
+  )$$,
+  'Alice can invite Bob again after revocation'
+);
+
+select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","email":"bob@budgetia.test"}',
+  true
+);
+select lives_ok(
+  $$select public.accept_budget_invitation(
+    (select id from public.list_budget_invitations()
+     where space_name = 'Gestion membres')
+  )$$,
+  'Bob can accept the renewed invitation'
+);
+
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","email":"alice@budgetia.test"}',
+  true
+);
+select lives_ok(
+  $$select public.remove_budget_space_member(
+    (select id from public.budget_spaces where name = 'Gestion membres'),
+    '22222222-2222-4222-8222-222222222222'
+  )$$,
+  'the owner can remove an editor'
+);
+select is(
+  (select count(*)::integer
+   from public.list_budget_space_members(
+     (select id from public.budget_spaces where name = 'Gestion membres')
+   )),
+  1,
+  'only the owner remains after removal'
+);
+select throws_ok(
+  $$select public.delete_shared_budget(
+    (select id from public.budget_spaces where name = 'Gestion membres'),
+    'mauvaise confirmation'
+  )$$,
+  '22023',
+  null,
+  'a shared budget cannot be deleted with a mismatched confirmation'
+);
+select lives_ok(
+  $$select public.delete_shared_budget(
+    (select id from public.budget_spaces where name = 'Gestion membres'),
+    'Gestion membres'
+  )$$,
+  'the owner can delete a shared budget with its exact name'
+);
+select is(
+  (select count(*)::integer from public.budget_spaces where name = 'Gestion membres'),
+  0,
+  'the confirmed shared budget deletion cascades completely'
+);
+
 reset role;
+
+select lives_ok(
+  $$delete from auth.users where id = '11111111-1111-4111-8111-111111111111'$$,
+  'Alice can delete her account without breaking a shared budget'
+);
+select is(
+  (select count(*)::integer from public.budget_spaces
+   where kind = 'personal' and created_by = '11111111-1111-4111-8111-111111111111'),
+  0,
+  'account deletion removes the personal budget'
+);
+select is(
+  (select count(*)::integer from public.budget_spaces where name = 'Budget du couple'),
+  1,
+  'account deletion preserves a shared budget with another member'
+);
+select is(
+  (select role from public.budget_space_members
+   where space_id = (select id from public.budget_spaces where name = 'Budget du couple')
+     and user_id = '22222222-2222-4222-8222-222222222222'),
+  'owner',
+  'the remaining member automatically becomes owner'
+);
+select is(
+  (select user_id from public.expenses where request_id = 'shared-alice-kept'),
+  null,
+  'the deleted account shared expense remains anonymously'
+);
+select is(
+  (select count(*)::integer from public.budget_space_members
+   where user_id = '11111111-1111-4111-8111-111111111111'),
+  0,
+  'the deleted account no longer has any memberships'
+);
 
 select has_index(
   'public', 'expenses', 'expenses_space_spent_at_idx',

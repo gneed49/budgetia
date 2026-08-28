@@ -1,0 +1,183 @@
+name: Android EAS release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Build EAS a lancer
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - production
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-eas-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  preview:
+    name: EAS preview APK
+    if: >-
+      vars.EAS_PRODUCTION_ENABLED == 'true' &&
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && inputs.profile == 'preview'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: preview
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Configure Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Validate configuration
+        shell: bash
+        run: |
+          test -n "$EXPO_TOKEN"
+          test -n "$EAS_PROJECT_ID"
+
+      - name: Install and validate source
+        run: npm ci && npm run check
+
+      - name: Link the Expo project for this runner
+        working-directory: apps/mobile
+        run: eas init --id "$EAS_PROJECT_ID" --force --non-interactive
+
+      - name: Build the installable APK with EAS
+        working-directory: apps/mobile
+        run: eas build --platform android --profile preview --non-interactive --json > "$RUNNER_TEMP/eas-build.json"
+
+      - name: Resolve and download the APK
+        id: eas
+        shell: bash
+        run: |
+          BUILD_URL="$(node -e "const fs=require('fs');const value=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/eas-build.json','utf8'));const build=Array.isArray(value)?value[0]:value;if(!build?.artifacts?.buildUrl)process.exit(1);process.stdout.write(build.artifacts.buildUrl)")"
+          printf 'build-url=%s\n' "$BUILD_URL" >> "$GITHUB_OUTPUT"
+          curl --fail --location --retry 3 "$BUILD_URL" --output "Budgetia-${GITHUB_SHA::7}.apk"
+
+      - name: Upload APK to GitHub
+        id: apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: budgetia-eas-preview-${{ github.run_number }}
+          path: Budgetia-*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish download links
+        shell: bash
+        run: |
+          {
+            echo "## APK Android EAS"
+            echo
+            echo "[Télécharger l’APK depuis GitHub](${{ steps.apk.outputs.artifact-url }})"
+            echo
+            echo "[Lien direct EAS](${{ steps.eas.outputs.build-url }})"
+            echo
+            echo "- Build: \`${GITHUB_SHA}\`"
+            echo "- Profil: \`preview\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  production:
+    name: EAS production AAB
+    if: >-
+      vars.EAS_PRODUCTION_ENABLED == 'true' &&
+      (startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'workflow_dispatch' && inputs.profile == 'production'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Configure Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Validate release
+        shell: bash
+        run: |
+          test -n "$EXPO_TOKEN"
+          test -n "$EAS_PROJECT_ID"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            APP_VERSION="$(node -p "require('./apps/mobile/app.json').expo.version")"
+            test "$GITHUB_REF_NAME" = "v$APP_VERSION"
+          fi
+
+      - name: Install and validate source
+        run: npm ci && npm run check
+
+      - name: Link the Expo project for this runner
+        working-directory: apps/mobile
+        run: eas init --id "$EAS_PROJECT_ID" --force --non-interactive
+
+      - name: Build the Play Store bundle with EAS
+        working-directory: apps/mobile
+        run: eas build --platform android --profile production --non-interactive --json > "$RUNNER_TEMP/eas-build.json"
+
+      - name: Resolve and download the AAB
+        id: eas
+        shell: bash
+        run: |
+          BUILD_URL="$(node -e "const fs=require('fs');const value=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/eas-build.json','utf8'));const build=Array.isArray(value)?value[0]:value;if(!build?.artifacts?.buildUrl)process.exit(1);process.stdout.write(build.artifacts.buildUrl)")"
+          printf 'build-url=%s\n' "$BUILD_URL" >> "$GITHUB_OUTPUT"
+          curl --fail --location --retry 3 "$BUILD_URL" --output "Budgetia-${GITHUB_REF_NAME:-production}.aab"
+
+      - name: Upload AAB to GitHub
+        id: aab
+        uses: actions/upload-artifact@v4
+        with:
+          name: budgetia-eas-production-${{ github.run_number }}
+          path: Budgetia-*.aab
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" Budgetia-*.aab --title "Budgetia ${GITHUB_REF_NAME}" --generate-notes
+
+      - name: Publish download links
+        shell: bash
+        run: |
+          {
+            echo "## AAB Android EAS"
+            echo
+            echo "[Télécharger l’AAB depuis GitHub](${{ steps.aab.outputs.artifact-url }})"
+            echo
+            echo "[Lien direct EAS](${{ steps.eas.outputs.build-url }})"
+            echo
+            echo "- Version: \`${GITHUB_REF_NAME}\`"
+            echo "- Profil: \`production\`"
+          } >> "$GITHUB_STEP_SUMMARY"

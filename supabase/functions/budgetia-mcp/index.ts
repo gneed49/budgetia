@@ -19,10 +19,8 @@ import {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const PUBLISHABLE_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const PUBLIC_SUPABASE_URL =
-  Deno.env.get("BUDGETIA_PUBLIC_SUPABASE_URL")?.replace(/\/+$/, "") ?? SUPABASE_URL;
-const MCP_URL = `${PUBLIC_SUPABASE_URL}/functions/v1/budgetia-mcp`;
-const AUTH_SERVER = `${PUBLIC_SUPABASE_URL}/auth/v1`;
+const CONFIGURED_PUBLIC_URL =
+  Deno.env.get("BUDGETIA_PUBLIC_SUPABASE_URL")?.replace(/\/+$/, "");
 const MODERN_PROTOCOL_VERSION = "2026-07-28";
 const LEGACY_PROTOCOL_VERSIONS = new Set(["2025-11-25", "2025-06-18", "2025-03-26"]);
 const SERVER_INFO = { name: "budgetia", version: "0.4.0" };
@@ -80,6 +78,18 @@ function json(data: unknown, status = 200, extraHeaders: Record<string, string> 
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json", ...extraHeaders },
   });
+}
+
+function publicEndpoints(req: Request) {
+  const internalUrl = new URL(req.url);
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const forwardedProtocol = req.headers.get("x-forwarded-proto");
+  const publicBaseUrl = CONFIGURED_PUBLIC_URL ??
+    `${forwardedProtocol ?? internalUrl.protocol.replace(":", "")}://${forwardedHost ?? req.headers.get("host") ?? internalUrl.host}`;
+  return {
+    authServer: `${publicBaseUrl}/auth/v1`,
+    mcpUrl: `${publicBaseUrl}/functions/v1/budgetia-mcp`,
+  };
 }
 
 function rpcError(id: unknown, code: number, message: string, status = 200) {
@@ -552,11 +562,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
+  const { authServer, mcpUrl } = publicEndpoints(req);
   const pathname = new URL(req.url).pathname;
   if (pathname.endsWith("/.well-known/oauth-protected-resource")) {
     return json({
-      resource: MCP_URL,
-      authorization_servers: [AUTH_SERVER],
+      resource: mcpUrl,
+      authorization_servers: [authServer],
       scopes_supported: ["email"],
       bearer_methods_supported: ["header"],
     });
@@ -570,7 +581,7 @@ Deno.serve(async (req) => {
     db = await authenticatedClient(req);
   } catch {
     return json({ error: "authentication_required" }, 401, {
-      "WWW-Authenticate": `Bearer resource_metadata="${MCP_URL}/.well-known/oauth-protected-resource", scope="email"`,
+      "WWW-Authenticate": `Bearer resource_metadata="${mcpUrl}/.well-known/oauth-protected-resource", scope="email"`,
     });
   }
 

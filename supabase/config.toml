@@ -374,6 +374,9 @@ allow_dynamic_registration = true
 [functions.budgetia-mcp]
 verify_jwt = false
 
+[functions.delete-account]
+verify_jwt = true
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
@@ -385,8 +388,10 @@ inspector_port = 57383
 # The Deno major version to use.
 deno_version = 2
 
-# [edge_runtime.secrets]
-# secret_key = "env(SECRET_VALUE)"
+[edge_runtime.secrets]
+# Public local origin used only in OAuth metadata emitted by the local MCP.
+# Production deployments set BUDGETIA_PUBLIC_SUPABASE_URL as an Edge secret.
+BUDGETIA_PUBLIC_SUPABASE_URL = "http://127.0.0.1:57321"
 
 [analytics]
 enabled = true

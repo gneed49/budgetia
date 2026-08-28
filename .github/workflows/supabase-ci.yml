@@ -1,0 +1,56 @@
+name: Supabase CI
+
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "scripts/smoke-*.mjs"
+      - "scripts/run-local-smokes.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/supabase-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/**"
+      - "scripts/smoke-*.mjs"
+      - "scripts/run-local-smokes.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/supabase-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  database-and-functions:
+    name: Migrations, RLS and Edge Functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start isolated Supabase stack
+        run: npx supabase start
+
+      - name: Test migrations and RLS
+        run: npm run supabase:test
+
+      - name: Lint database schema
+        run: npx supabase db lint --local --schema public,private --level warning --fail-on error
+
+      - name: Exercise MCP and account deletion end to end
+        run: npm run smoke:local
+
+      - name: Stop isolated Supabase stack
+        if: always()
+        run: npx supabase stop --no-backup
