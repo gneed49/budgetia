@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(79);
+select plan(84);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -24,6 +24,20 @@ select has_table('public', 'budget_invitations', 'budget invitations table exist
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'expenses', 'expenses table exists');
 select has_table('public', 'budget_settings', 'budget settings table exists');
+select ok(
+  has_column_privilege('authenticated', 'public.expenses', 'amount_cents', 'UPDATE')
+  and has_column_privilege('authenticated', 'public.expenses', 'category_id', 'UPDATE')
+  and has_column_privilege('authenticated', 'public.expenses', 'note', 'UPDATE')
+  and has_column_privilege('authenticated', 'public.expenses', 'spent_at', 'UPDATE'),
+  'authenticated members can update only the editable expense fields'
+);
+select ok(
+  not has_column_privilege('authenticated', 'public.expenses', 'space_id', 'UPDATE')
+  and not has_column_privilege('authenticated', 'public.expenses', 'user_id', 'UPDATE')
+  and not has_column_privilege('authenticated', 'public.expenses', 'source', 'UPDATE')
+  and not has_column_privilege('authenticated', 'public.expenses', 'request_id', 'UPDATE'),
+  'expense ownership, source and idempotency fields remain immutable'
+);
 
 select is(
   (select count(*)::integer from public.budget_spaces
@@ -396,12 +410,45 @@ select lives_ok(
   )$$,
   'Bob can add an expense to the shared budget'
 );
+select lives_ok(
+  $$update public.expenses
+    set amount_cents = 2450,
+        category_id = (
+          select id from public.categories
+          where name = 'Transport'
+            and space_id = (select id from public.budget_spaces where name = 'Budget du couple')
+        ),
+        note = 'Courses corrigées',
+        spent_at = '2026-08-25'
+    where request_id = 'shared-bob-1'$$,
+  'a member can edit an expense in a shared budget'
+);
+select is(
+  (select jsonb_build_array(amount_cents, note, spent_at, category_id)
+   from public.expenses where request_id = 'shared-bob-1'),
+  (select jsonb_build_array(
+    2450::bigint,
+    'Courses corrigées',
+    '2026-08-25'::date,
+    id
+  ) from public.categories
+    where name = 'Transport'
+      and space_id = (select id from public.budget_spaces where name = 'Budget du couple')),
+  'the editable expense fields are persisted together'
+);
+select is_empty(
+  $$update public.expenses
+    set amount_cents = 999
+    where request_id = 'retry-safe-1'
+    returning id$$,
+  'RLS prevents editing an expense from another personal budget'
+);
 select is(
   (public.get_budgetia_spending_summary(
     'month', '2026-08-26', null,
     (select id from public.budget_spaces where name = 'Budget du couple')
   )->>'totalCents')::bigint,
-  2300::bigint,
+  2450::bigint,
   'Bob reads the shared total'
 );
 
@@ -417,7 +464,7 @@ select is(
     'month', '2026-08-26', null,
     (select id from public.budget_spaces where name = 'Budget du couple')
   )->>'totalCents')::bigint,
-  2300::bigint,
+  2450::bigint,
   'Alice sees the expense added by Bob to their shared space'
 );
 select is(

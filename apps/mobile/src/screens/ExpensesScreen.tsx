@@ -19,6 +19,7 @@ import {
 } from "@budgetia/domain";
 
 import { BudgetApi } from "../api";
+import { AddExpenseModal } from "../components/AddExpenseModal";
 import { CategoryFilters } from "../components/CategoryFilters";
 import { PeriodNavigator } from "../components/Controls";
 import { ErrorBanner, LoadingBlock } from "../components/Feedback";
@@ -44,6 +45,7 @@ export function ExpensesScreen(props: {
   const [referenceDate, setReferenceDate] = useState(todayISO());
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const categoryKey = categoryIds.join(",");
@@ -105,71 +107,86 @@ export function ExpensesScreen(props: {
   const total = expenses.reduce((sum, expense) => sum + expense.amountCents, 0);
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.titleRow}>
-        <View>
-          <Text style={styles.title}>Dépenses</Text>
-          <Text style={styles.subtitle}>Retrouvez et filtrez chaque mouvement.</Text>
+    <>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.titleRow}>
+          <View>
+            <Text style={styles.title}>Dépenses</Text>
+            <Text style={styles.subtitle}>Retrouvez et filtrez chaque mouvement.</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ajouter une dépense"
+            onPress={props.onAdd}
+            style={styles.add}
+          >
+            <Ionicons name="add" size={25} color={colors.onPrimary} />
+          </Pressable>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Ajouter une dépense"
-          onPress={props.onAdd}
-          style={styles.add}
-        >
-          <Ionicons name="add" size={25} color={colors.onPrimary} />
-        </Pressable>
-      </View>
 
-      <PeriodNavigator
-        label={formatPeriodLabel("month", referenceDate)}
-        onPrevious={() => setReferenceDate((current) => movePeriod("month", current, -1))}
-        onNext={() => setReferenceDate((current) => movePeriod("month", current, 1))}
-      />
-      <CategoryFilters
+        <PeriodNavigator
+          label={formatPeriodLabel("month", referenceDate)}
+          onPrevious={() =>
+            setReferenceDate((current) => movePeriod("month", current, -1))
+          }
+          onNext={() =>
+            setReferenceDate((current) => movePeriod("month", current, 1))
+          }
+        />
+        <CategoryFilters
+          categories={props.categories}
+          selectedIds={categoryIds}
+          onChange={setCategoryIds}
+        />
+
+        <View style={styles.summary}>
+          <View>
+            <Text style={styles.summaryLabel}>Total filtré</Text>
+            <Text style={styles.summaryAmount}>{formatMoney(total)}</Text>
+          </View>
+          <View style={styles.count}>
+            <Text style={styles.countValue}>{expenses.length}</Text>
+            <Text style={styles.countLabel}>dépenses</Text>
+          </View>
+        </View>
+
+        {error ? <ErrorBanner message={error} /> : null}
+        {loading && !expenses.length ? (
+          <LoadingBlock />
+        ) : expenses.length ? (
+          <View>
+            {expenses.map((expense) => (
+              <ExpenseRow
+                key={expense.id}
+                expense={expense}
+                onEdit={setEditingExpense}
+                onDelete={confirmDelete}
+              />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.empty}>
+            <Ionicons name="receipt-outline" size={30} color={colors.mint} />
+            <Text style={styles.emptyTitle}>Aucune dépense trouvée</Text>
+            <Text style={styles.emptyCopy}>
+              Essayez un autre mois ou retirez certains filtres.
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+      <AddExpenseModal
+        visible={editingExpense !== null}
+        api={props.api}
         categories={props.categories}
-        selectedIds={categoryIds}
-        onChange={setCategoryIds}
+        expense={editingExpense}
+        onClose={() => setEditingExpense(null)}
+        onSaved={props.onMutated}
       />
-
-      <View style={styles.summary}>
-        <View>
-          <Text style={styles.summaryLabel}>Total filtré</Text>
-          <Text style={styles.summaryAmount}>{formatMoney(total)}</Text>
-        </View>
-        <View style={styles.count}>
-          <Text style={styles.countValue}>{expenses.length}</Text>
-          <Text style={styles.countLabel}>dépenses</Text>
-        </View>
-      </View>
-
-      {error ? <ErrorBanner message={error} /> : null}
-      {loading && !expenses.length ? (
-        <LoadingBlock />
-      ) : expenses.length ? (
-        <View>
-          {expenses.map((expense) => (
-            <ExpenseRow
-              key={expense.id}
-              expense={expense}
-              onDelete={confirmDelete}
-            />
-          ))}
-        </View>
-      ) : (
-        <View style={styles.empty}>
-          <Ionicons name="receipt-outline" size={30} color={colors.mint} />
-          <Text style={styles.emptyTitle}>Aucune dépense trouvée</Text>
-          <Text style={styles.emptyCopy}>
-            Essayez un autre mois ou retirez certains filtres.
-          </Text>
-        </View>
-      )}
-    </ScrollView>
+    </>
   );
 }
 

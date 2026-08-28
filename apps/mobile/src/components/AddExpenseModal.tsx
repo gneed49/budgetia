@@ -12,7 +12,12 @@ import {
   View,
 } from "react-native";
 
-import { addDays, todayISO, type Category } from "@budgetia/domain";
+import {
+  addDays,
+  todayISO,
+  type Category,
+  type Expense,
+} from "@budgetia/domain";
 
 import { BudgetApi } from "../api";
 import {
@@ -28,6 +33,7 @@ export function AddExpenseModal(props: {
   visible: boolean;
   api: BudgetApi;
   categories: Category[];
+  expense?: Expense | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -42,13 +48,17 @@ export function AddExpenseModal(props: {
 
   useEffect(() => {
     if (props.visible) {
-      setAmount("");
-      setCategoryId(props.categories[0]?.id ?? "");
-      setNote("");
-      setSpentAt(todayISO());
+      setAmount(
+        props.expense
+          ? (props.expense.amountCents / 100).toFixed(2).replace(".", ",")
+          : "",
+      );
+      setCategoryId(props.expense?.categoryId ?? props.categories[0]?.id ?? "");
+      setNote(props.expense?.note ?? "");
+      setSpentAt(props.expense?.spentAt ?? todayISO());
       setError(null);
     }
-  }, [props.categories, props.visible]);
+  }, [props.categories, props.expense, props.visible]);
 
   async function save(): Promise<void> {
     if (!amount.trim() || !categoryId) {
@@ -58,13 +68,22 @@ export function AddExpenseModal(props: {
     setSaving(true);
     setError(null);
     try {
-      await props.api.addExpense({
-        amount,
-        categoryId,
-        ...(note.trim() ? { note: note.trim() } : {}),
-        spentAt,
-        requestId: `mobile-${Date.now()}`,
-      });
+      if (props.expense) {
+        await props.api.updateExpense(props.expense.id, {
+          amount,
+          categoryId,
+          note: note.trim(),
+          spentAt,
+        });
+      } else {
+        await props.api.addExpense({
+          amount,
+          categoryId,
+          ...(note.trim() ? { note: note.trim() } : {}),
+          spentAt,
+          requestId: `mobile-${Date.now()}`,
+        });
+      }
       props.onSaved();
       props.onClose();
     } catch (reason) {
@@ -90,8 +109,14 @@ export function AddExpenseModal(props: {
           <View style={styles.handle} />
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>Nouvelle dépense</Text>
-              <Text style={styles.subtitle}>Trois informations suffisent.</Text>
+              <Text style={styles.title}>
+                {props.expense ? "Modifier la dépense" : "Nouvelle dépense"}
+              </Text>
+              <Text style={styles.subtitle}>
+                {props.expense
+                  ? "Ajustez uniquement ce qui a changé."
+                  : "Trois informations suffisent."}
+              </Text>
             </View>
             <Pressable
               accessibilityRole="button"
@@ -214,7 +239,11 @@ export function AddExpenseModal(props: {
             >
               <Ionicons name="checkmark" size={22} color={colors.onPrimary} />
               <Text style={styles.submitText}>
-                {saving ? "Enregistrement…" : "Ajouter la dépense"}
+                {saving
+                  ? "Enregistrement…"
+                  : props.expense
+                    ? "Enregistrer les modifications"
+                    : "Ajouter la dépense"}
               </Text>
             </Pressable>
           </ScrollView>

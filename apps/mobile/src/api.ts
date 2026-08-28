@@ -637,6 +637,39 @@ export class BudgetApi {
     return this.getExpense((data as { id: string }).id);
   }
 
+  async updateExpense(
+    id: string,
+    input: {
+      amount: string;
+      categoryId: string;
+      note?: string;
+      spentAt: string;
+    },
+  ): Promise<Expense> {
+    getPeriodRange("month", input.spentAt);
+    const note = input.note?.trim() ?? "";
+    if (note.length > 160) throw new ApiError("La note est limitée à 160 caractères.");
+    const { data, error } = await supabase
+      .from("expenses")
+      .update({
+        amount_cents: parseMoneyToCents(input.amount),
+        category_id: input.categoryId,
+        note,
+        spent_at: input.spentAt,
+      })
+      .eq("space_id", this.spaceId)
+      .eq("id", id)
+      .select("id")
+      .single();
+    if (error || !data) {
+      throw toApiError(
+        error ?? { message: "missing expense update" },
+        "Impossible de modifier la dépense.",
+      );
+    }
+    return this.getExpense(data.id as string);
+  }
+
   async deleteExpense(id: string): Promise<void> {
     const { error } = await supabase
       .from("expenses")

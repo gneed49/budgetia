@@ -253,6 +253,7 @@ function BudgetiaApp(props: { session: Session }) {
 
   return (
     <BudgetiaWorkspace
+      key={activeSpace.id}
       session={props.session}
       spaces={spaces}
       activeSpace={activeSpace}

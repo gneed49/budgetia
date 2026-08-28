@@ -14,6 +14,7 @@ import {
 
 export function ExpenseRow(props: {
   expense: Expense;
+  onEdit?: (expense: Expense) => void;
   onDelete?: (expense: Expense) => void;
 }) {
   const { colors } = useTheme();
@@ -40,13 +41,24 @@ export function ExpenseRow(props: {
         </Text>
       </View>
       <Text style={styles.amount}>{formatMoney(expense.amountCents)}</Text>
+      {props.onEdit ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Modifier ${expense.note || expense.categoryName}`}
+          hitSlop={8}
+          onPress={() => props.onEdit?.(expense)}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        >
+          <Ionicons name="pencil-outline" size={19} color={colors.mintDark} />
+        </Pressable>
+      ) : null}
       {props.onDelete ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Supprimer ${expense.note || expense.categoryName}`}
           hitSlop={8}
           onPress={() => props.onDelete?.(expense)}
-          style={({ pressed }) => [styles.delete, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
         >
           <Ionicons name="trash-outline" size={19} color={colors.coral} />
         </Pressable>
@@ -80,7 +92,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: "800",
     fontVariant: ["tabular-nums"],
   },
-  delete: {
+  action: {
     width: 38,
     height: 44,
     alignItems: "center",
