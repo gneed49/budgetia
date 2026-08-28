@@ -5,41 +5,38 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# The build only needs to read the source. It never deploys Supabase or uses a
-# database connection string.
+# The build never deploys Supabase or uses a database connection string.
+# Write access is used only by the final step to publish the APK prerelease;
+# checkout does not persist that credential during dependency installation.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
     name: Build installable Android APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      # These are intentionally limited to the URL and publishable client key.
-      # Their values are compiled into a mobile app, so a service_role/secret
-      # key must never be substituted here.
-      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install dependencies
         run: npm ci
@@ -51,31 +48,78 @@ jobs:
         working-directory: apps/mobile
         run: npx expo prebuild --platform android --no-install
 
-      - name: Build signed debug APK
+      - name: Build standalone signed preview APK
         working-directory: apps/mobile/android
-        run: ./gradlew assembleDebug
+        env:
+          # These values are intentionally scoped to the bundle step. They are
+          # public client configuration compiled into the APK; never substitute
+          # a service_role key, sb_secret_* value or database password here.
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          NODE_ENV: production
+        run: ./gradlew assembleRelease
 
-      - name: Calculate APK checksum
-        id: checksum
-        run: echo "sha256=$(sha256sum apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Verify standalone APK and signature
+        shell: bash
+        run: |
+          APK_PATH="apps/mobile/android/app/build/outputs/apk/release/app-release.apk"
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          unzip -Z1 "$APK_PATH" | grep -qx 'assets/index.android.bundle'
+          "$BUILD_TOOLS/apksigner" verify --verbose "$APK_PATH"
+
+      - name: Prepare named APK and checksum
+        id: package
+        shell: bash
+        run: |
+          APK_FILE="Budgetia-main-${GITHUB_SHA::7}.apk"
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "$APK_FILE"
+          APK_SHA="$(sha256sum "$APK_FILE" | awk '{print $1}')"
+          printf '%s  %s\n' "$APK_SHA" "$APK_FILE" > SHA256SUMS.txt
+          printf 'file=%s\n' "$APK_FILE" >> "$GITHUB_OUTPUT"
+          printf 'sha256=%s\n' "$APK_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK
         id: apk
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: budgetia-android-apk-${{ github.run_number }}
-          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            ${{ steps.package.outputs.file }}
+            SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish permanent GitHub prerelease
+        id: release
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RELEASE_TAG="apk-${GITHUB_RUN_NUMBER}"
+          APK_FILE="${{ steps.package.outputs.file }}"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "$APK_FILE" SHA256SUMS.txt --clobber
+          else
+            gh release create "$RELEASE_TAG" "$APK_FILE" SHA256SUMS.txt \
+              --target "$GITHUB_SHA" \
+              --title "Budgetia APK #${GITHUB_RUN_NUMBER}" \
+              --notes "APK autonome universel de préversion, signé avec une clé de développement et construit automatiquement depuis main (${GITHUB_SHA})." \
+              --prerelease
+          fi
+          printf 'download-url=https://github.com/%s/releases/download/%s/%s\n' \
+            "$GITHUB_REPOSITORY" "$RELEASE_TAG" "$APK_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Publish download link
         run: |
           {
             echo "## APK Android"
             echo
-            echo "[Télécharger l’APK Budgetia](${{ steps.apk.outputs.artifact-url }})"
+            echo "[Télécharger l’APK Budgetia — lien permanent](${{ steps.release.outputs.download-url }})"
+            echo
+            echo "[Artefact du run, conservé 30 jours](${{ steps.apk.outputs.artifact-url }})"
             echo
             echo "- Build: \`${{ github.sha }}\`"
-            echo "- SHA-256: \`${{ steps.checksum.outputs.sha256 }}\`"
-            echo "- L’artefact est conservé 30 jours."
+            echo "- SHA-256: \`${{ steps.package.outputs.sha256 }}\`"
+            echo "- Canal: préversion de développement, distincte de l’AAB EAS production."
           } >> "$GITHUB_STEP_SUMMARY"

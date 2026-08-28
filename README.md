@@ -123,7 +123,7 @@ Déployez `apps/mobile/dist`, avec les deux variables `EXPO_PUBLIC_SUPABASE_*` d
 
 Budgetia est bien une application React Native, pilotée par Expo. Deux chemins de build coexistent :
 
-- **Android APK** construit gratuitement un APK de debug avec Expo Prebuild et Gradle à chaque push sur `main`. Le lien et le SHA-256 apparaissent dans le résumé GitHub Actions ;
+- **Android APK** construit gratuitement un APK autonome de préversion avec Expo Prebuild et Gradle Release à chaque push sur `main`. Le lien permanent, le lien temporaire du run et le SHA-256 apparaissent dans le résumé GitHub Actions ;
 - **Android EAS release** utilise Expo EAS Build. Le profil `preview` produit un APK installable sur `main` et le profil `production` produit un AAB signé pour Google Play sur un tag `vX.Y.Z`.
 
 Le premier chemin reste un secours fonctionnel. Le second est la voie de distribution production : Expo conserve la clé de signature Android à distance et GitHub ne reçoit jamais le keystore. Le workflow EAS reste volontairement désactivé tant que le compte Expo et les credentials Android n’ont pas été initialisés.
@@ -155,6 +155,8 @@ Ajoutez enfin dans **GitHub → Settings → Secrets and variables → Actions**
 | Variable | `EAS_PRODUCTION_ENABLED` | `true` uniquement après un premier build EAS réussi |
 
 Le workflow relie temporairement le projet avec `EAS_PROJECT_ID`, attend la fin du build, télécharge le binaire puis publie à la fois le lien GitHub et le lien EAS dans le résumé. Un tag `v1.0.0` doit correspondre à `expo.version: 1.0.0` pour créer la GitHub Release.
+
+Chaque build `main` crée une GitHub Release marquée **préversion**, avec l’APK renommé `Budgetia-main-<commit>.apk` et `SHA256SUMS.txt`. Le JavaScript est embarqué : l’application n’a pas besoin du serveur Metro pour démarrer. Cette préversion est signée avec la clé Android de développement générée par Expo ; elle ne doit pas être confondue avec l’AAB EAS signé par la clé de production destinée au Play Store.
 
 ### APK Gradle de secours
 

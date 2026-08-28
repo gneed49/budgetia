@@ -33,38 +33,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: preview
-    env:
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
 
-      - name: Configure Expo and EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Install and validate source without deployment credentials
+        run: npm ci && npm run check
 
       - name: Validate configuration
         shell: bash
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
         run: |
           test -n "$EXPO_TOKEN"
           test -n "$EAS_PROJECT_ID"
 
-      - name: Install and validate source
-        run: npm ci && npm run check
+      - name: Configure Expo and EAS
+        uses: expo/expo-github-action@v9
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Link the Expo project for this runner
         working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
         run: eas init --id "$EAS_PROJECT_ID" --force --non-interactive
 
       - name: Build the installable APK with EAS
         working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas build --platform android --profile preview --non-interactive --json > "$RUNNER_TEMP/eas-build.json"
 
       - name: Resolve and download the APK
@@ -77,7 +84,7 @@ jobs:
 
       - name: Upload APK to GitHub
         id: apk
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: budgetia-eas-preview-${{ github.run_number }}
           path: Budgetia-*.apk
@@ -107,25 +114,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: production
-    env:
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
 
-      - name: Configure Expo and EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Install and validate source without deployment credentials
+        run: npm ci && npm run check
 
       - name: Validate release
         shell: bash
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
         run: |
           test -n "$EXPO_TOKEN"
           test -n "$EAS_PROJECT_ID"
@@ -134,15 +140,23 @@ jobs:
             test "$GITHUB_REF_NAME" = "v$APP_VERSION"
           fi
 
-      - name: Install and validate source
-        run: npm ci && npm run check
+      - name: Configure Expo and EAS
+        uses: expo/expo-github-action@v9
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Link the Expo project for this runner
         working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
         run: eas init --id "$EAS_PROJECT_ID" --force --non-interactive
 
       - name: Build the Play Store bundle with EAS
         working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas build --platform android --profile production --non-interactive --json > "$RUNNER_TEMP/eas-build.json"
 
       - name: Resolve and download the AAB
@@ -155,7 +169,7 @@ jobs:
 
       - name: Upload AAB to GitHub
         id: aab
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: budgetia-eas-production-${{ github.run_number }}
           path: Budgetia-*.aab

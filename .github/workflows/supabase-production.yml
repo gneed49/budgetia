@@ -23,15 +23,12 @@ jobs:
     environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
-      BUDGETIA_PUBLIC_SUPABASE_URL: https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -41,22 +38,43 @@ jobs:
 
       - name: Validate deployment configuration
         shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: |
           test -n "$SUPABASE_ACCESS_TOKEN"
           test -n "$SUPABASE_DB_PASSWORD"
           test -n "$SUPABASE_PROJECT_REF"
 
       - name: Link production project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Apply reviewed migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: npx supabase db push --include-all
 
       - name: Configure the public OAuth metadata origin
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+          BUDGETIA_PUBLIC_SUPABASE_URL: https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co
         run: npx supabase secrets set BUDGETIA_PUBLIC_SUPABASE_URL="$BUDGETIA_PUBLIC_SUPABASE_URL" --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Deploy OAuth-protected Budgetia MCP
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: npx supabase functions deploy budgetia-mcp --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
 
       - name: Deploy authenticated account deletion
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: npx supabase functions deploy delete-account --project-ref "$SUPABASE_PROJECT_REF"

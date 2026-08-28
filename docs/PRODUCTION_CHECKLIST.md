@@ -44,7 +44,8 @@ Ces accès d’administration ne doivent jamais être placés dans Expo, l’APK
 - [x] Configuration Expo SDK 57 et identifiant Android `com.budgetia.mobile`.
 - [x] Diagnostic Expo officiel : 21 contrôles sur 21 réussis.
 - [x] Profils EAS : APK `preview`, AAB `production` et version Android distante auto-incrémentée.
-- [x] Workflow Gradle de secours produisant un APK sur chaque push `main`.
+- [x] Workflow Gradle Release de secours produisant un APK autonome sur chaque push `main`.
+- [x] Préversion GitHub permanente avec APK nommé, checksum et lien direct à chaque push `main`.
 - [x] APK local généré avec JDK 21 / Android 36 et signature APK v2 vérifiée.
 - [ ] Projet EAS créé avec `eas init` et `EAS_PROJECT_ID` enregistré comme variable GitHub.
 - [ ] Premier build `preview` interactif réussi et credentials Android distants créés.
