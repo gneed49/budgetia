@@ -122,4 +122,19 @@ const retainedExpense = await api(
 );
 assert.deepEqual(retainedExpense, [{ amount_cents: 3490, user_id: null }]);
 
-console.log("Account deletion smoke test passed.");
+const bobCleanup = await fetch(functionUrl, {
+  method: "POST",
+  headers: {
+    apikey: publishableKey,
+    Authorization: `Bearer ${bob.access_token}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ confirmation: "SUPPRIMER" }),
+});
+const bobCleanupText = await bobCleanup.text();
+assert.equal(bobCleanup.status, 200, bobCleanupText);
+const bobCleanupResult = JSON.parse(bobCleanupText);
+assert.equal(bobCleanupResult.deleted, true);
+assert.equal(bobCleanupResult.impact.ownedSharedSpaceCount, 1);
+
+console.log("Account deletion smoke test passed and removed both smoke accounts.");

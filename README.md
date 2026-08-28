@@ -26,6 +26,8 @@ Budgetia est une application Expo / React Native pour saisir des dépenses, cré
 - MCP privé pour ajouter, lister et analyser les dépenses depuis ChatGPT ;
 - OAuth 2.1 Supabase avec PKCE et écran de consentement Budgetia.
 
+La conception de la prochaine évolution — plafonds mensuels par catégorie et coach budgétaire sans fenêtre de prompt — est détaillée dans [`docs/BUDGET_COACH_DESIGN.md`](docs/BUDGET_COACH_DESIGN.md). L’IA n’est pas encore activée dans la V1 actuelle.
+
 ## Architecture
 
 ```text
@@ -79,6 +81,14 @@ npm run android --workspace @budgetia/mobile
 Sur un téléphone physique, remplacez `127.0.0.1` par une URL Supabase accessible depuis le téléphone. Le projet Supabase local reste surtout destiné au navigateur et aux émulateurs correctement configurés.
 
 ## Déploiement Supabase
+
+Pour une configuration guidée qui garde les secrets hors du dépôt et de l’APK, lancez :
+
+```bash
+./scripts/configure-production.sh
+```
+
+Le script écrit uniquement les deux valeurs clientes publiques dans les fichiers `.env` ignorés par Git. Les mots de passe et jetons sont envoyés directement vers les coffres GitHub lorsqu’ils sont fournis, sans être enregistrés localement.
 
 Créez d’abord un projet Supabase, puis liez ce checkout sans partager vos identifiants dans le chat :
 

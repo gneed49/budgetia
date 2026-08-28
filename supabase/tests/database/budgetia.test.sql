@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(84);
+select plan(86);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -722,6 +722,14 @@ select has_index(
 select has_index(
   'public', 'budget_space_members', 'budget_space_members_user_id_idx',
   'membership RLS lookups have a user index'
+);
+select has_index(
+  'public', 'budget_settings', 'budget_settings_user_id_idx',
+  'budget settings user foreign key has a covering index'
+);
+select has_index(
+  'public', 'expenses', 'expenses_user_id_idx',
+  'expense user foreign key has a covering index'
 );
 
 select * from finish();

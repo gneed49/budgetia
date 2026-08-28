@@ -21,10 +21,12 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 - [x] Tests pgTAP RLS et cycle de vie des espaces/comptes.
 - [x] Smoke tests HTTP du MCP et de la suppression de compte.
 - [x] Audit npm relu : aucune alerte haute ou critique. Les alertes modérées actuelles viennent de `uuid@7` via l’outil de build Expo `xcode`; le correctif forcé imposerait un downgrade incompatible et n’est pas appliqué.
-- [ ] Projet Supabase de production créé et relié au dépôt.
-- [ ] `npx supabase db push --dry-run` relu, puis migrations appliquées.
-- [ ] Edge Functions `budgetia-mcp` et `delete-account` déployées.
-- [ ] Secret Edge Function `BUDGETIA_PUBLIC_SUPABASE_URL` configuré avec l’URL publique réelle.
+- [x] Projet Supabase de production `Budgetia` créé en région `eu-west-3`.
+- [x] Six migrations appliquées et listées sur le projet distant, dont les index couvrant toutes les clés étrangères.
+- [x] Edge Functions `budgetia-mcp` et `delete-account` déployées et actives.
+- [x] Secret Edge Function `BUDGETIA_PUBLIC_SUPABASE_URL` configuré avec l’URL publique réelle.
+- [x] URL et clé publishable configurées dans les secrets GitHub du build APK ; aucune clé privilégiée n’est injectée dans Expo.
+- [x] Advisories relus : aucun défaut RLS exposé ; douze avertissements `SECURITY DEFINER` correspondent aux RPC authentifiées explicitement contrôlées et documentées dans `SECURITY.md`.
 - [ ] URL HTTPS du client OAuth déployée et ajoutée aux redirections Auth.
 - [ ] Confirmations e-mail activées et SMTP de production testé.
 - [ ] Protection CAPTCHA et limites Auth évaluées selon l’exposition publique.
@@ -38,6 +40,8 @@ Le workflow `Supabase production` peut automatiser migrations et fonctions aprè
 - variable `SUPABASE_PRODUCTION_ENABLED=true` seulement après une exécution manuelle contrôlée.
 
 Ces accès d’administration ne doivent jamais être placés dans Expo, l’APK, les variables `EXPO_PUBLIC_*` ou le dépôt.
+
+Le script `./scripts/configure-production.sh` guide la configuration reproductible d’un nouveau clone sans afficher ni commiter les secrets.
 
 ## 3. Expo et Android
 

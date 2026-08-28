@@ -280,4 +280,19 @@ const modernTools = await modernCall("tools/list");
 assert.equal(modernTools.result.tools.length, 8);
 assert.equal(modernTools.result.cacheScope, "public");
 
-console.log("Budgetia MCP smoke test: OAuth discovery/DCR, auth, personal/shared targeting, fallback expense, category lifecycle, legacy, modern and idempotent write passed.");
+const cleanupResponse = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
+  method: "POST",
+  headers: {
+    apikey: publishableKey,
+    Authorization: `Bearer ${accessToken}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ confirmation: "SUPPRIMER" }),
+});
+assert.equal(
+  cleanupResponse.status,
+  200,
+  `MCP smoke cleanup failed: ${await cleanupResponse.text()}`,
+);
+
+console.log("Budgetia MCP smoke test: OAuth discovery/DCR, auth, personal/shared targeting, fallback expense, category lifecycle, legacy, modern, idempotent write and cleanup passed.");

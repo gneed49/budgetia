@@ -31,3 +31,27 @@ _Avoid_: Catégorie système, catégorie supprimable
 **Transfert de catégorie**:
 Le reclassement de toutes les dépenses d’une catégorie vers une autre catégorie du même espace budgétaire.
 _Avoid_: Fusion inter-budgets, déplacement partiel
+
+**Plafond de catégorie**:
+Le montant cible maximal attribué à une catégorie pour un mois donné dans un espace budgétaire.
+_Avoid_: Limite bancaire, blocage de paiement
+
+**Position budgétaire**:
+L’état calculé d’un plafond de catégorie : dépensé, restant ou dépassement pour la période.
+_Avoid_: Solde bancaire, argent disponible
+
+**Écart mensuel**:
+La différence signée entre le plafond d’une catégorie et les dépenses du mois, conservée pour l’analyse sans modifier automatiquement le plafond du mois suivant.
+_Avoid_: Dette, report automatique
+
+**Fait financier**:
+Une mesure déterministe calculée par Budgetia à partir des données autorisées d’un espace, par exemple un dépassement ou une variation hebdomadaire.
+_Avoid_: Avis IA, intuition
+
+**Conseil budgétaire**:
+Une recommandation explicative produite à partir de faits financiers référencés, sans pouvoir modifier les données ni déclencher une opération financière.
+_Avoid_: Conseil en investissement, décision autonome
+
+**Bilan**:
+Une synthèse hebdomadaire ou mensuelle regroupant positions budgétaires, évolutions et conseils validés pour un espace.
+_Avoid_: Conversation IA, prompt
