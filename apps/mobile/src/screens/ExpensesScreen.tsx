@@ -24,6 +24,7 @@ import { CategoryFilters } from "../components/CategoryFilters";
 import { PeriodNavigator } from "../components/Controls";
 import { ErrorBanner, LoadingBlock } from "../components/Feedback";
 import { ExpenseRow } from "../components/ExpenseRow";
+import { ReceiptDetailsModal } from "../components/ReceiptDetailsModal";
 import { formatMoney } from "../format";
 import {
   radii,
@@ -46,6 +47,7 @@ export function ExpensesScreen(props: {
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [receiptExpense, setReceiptExpense] = useState<Expense | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const categoryKey = categoryIds.join(",");
@@ -165,6 +167,7 @@ export function ExpensesScreen(props: {
                 expense={expense}
                 onEdit={setEditingExpense}
                 onDelete={confirmDelete}
+                onOpenReceipt={setReceiptExpense}
               />
             ))}
           </View>
@@ -185,6 +188,12 @@ export function ExpensesScreen(props: {
         expense={editingExpense}
         onClose={() => setEditingExpense(null)}
         onSaved={props.onMutated}
+      />
+      <ReceiptDetailsModal
+        visible={receiptExpense !== null}
+        api={props.api}
+        expense={receiptExpense}
+        onClose={() => setReceiptExpense(null)}
       />
     </>
   );

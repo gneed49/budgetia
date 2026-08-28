@@ -57,6 +57,34 @@ const expenseSchema = {
   additionalProperties: false,
 };
 
+export const productGroupKeys = [
+  "fruits_vegetables",
+  "meat_fish",
+  "dairy_eggs",
+  "bakery",
+  "pantry",
+  "drinks",
+  "snacks",
+  "hygiene",
+  "household",
+  "baby",
+  "pet",
+  "other",
+] as const;
+
+export type ProductGroupKey = (typeof productGroupKeys)[number];
+
+const receiptItemSchema = {
+  type: "object",
+  properties: {
+    label: { type: "string" },
+    amount: { type: "number" },
+    product_group: { type: "string", enum: productGroupKeys },
+  },
+  required: ["label", "amount", "product_group"],
+  additionalProperties: false,
+};
+
 export const tools = [
   {
     name: "list_budget_spaces",
@@ -239,6 +267,117 @@ export const tools = [
     },
   },
   {
+    name: "add_receipt_expense",
+    title: "Ajouter un ticket détaillé Budgetia",
+    description:
+      "Use this after reading a receipt image and only after showing the recognized merchant, category, lines, product groups and total to the user and receiving explicit confirmation. Record one global expense; do not create one expense per line. Amounts are in euros and the total is derived from the validated lines.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        budget_space_id: budgetSpaceIdProperty,
+        category: { type: "string", minLength: 2, maxLength: 40 },
+        merchant: { type: "string", maxLength: 80 },
+        note: { type: "string", maxLength: 160 },
+        date: { type: "string", format: "date" },
+        request_id: { type: "string", minLength: 4, maxLength: 100 },
+        items: {
+          type: "array",
+          minItems: 1,
+          maxItems: 100,
+          items: receiptItemSchema,
+        },
+      },
+      required: ["items"],
+      additionalProperties: false,
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        expense: expenseSchema,
+        receipt: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            merchant: { type: "string" },
+            item_count: { type: "integer" },
+          },
+          required: ["id", "merchant", "item_count"],
+          additionalProperties: false,
+        },
+      },
+      required: ["expense", "receipt"],
+      additionalProperties: false,
+    },
+    securitySchemes: oauthSecurity,
+    _meta: compatibilitySecurity,
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: false,
+      idempotentHint: false,
+    },
+  },
+  {
+    name: "get_receipt_details",
+    title: "Détailler un ticket Budgetia",
+    description:
+      "Use this to retrieve the merchant and validated product lines attached to one expense ID returned by list_expenses or add_receipt_expense.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        budget_space_id: budgetSpaceIdProperty,
+        expense_id: { type: "string", format: "uuid" },
+      },
+      required: ["expense_id"],
+      additionalProperties: false,
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        receipt: { type: "object", additionalProperties: true },
+      },
+      required: ["receipt"],
+      additionalProperties: false,
+    },
+    securitySchemes: oauthSecurity,
+    _meta: compatibilitySecurity,
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  },
+  {
+    name: "get_product_breakdown",
+    title: "Analyser les pôles produit Budgetia",
+    description:
+      "Use this to analyze validated receipt lines by product group over a week, month or year, with optional Budgetia category and product-group filters.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        budget_space_id: budgetSpaceIdProperty,
+        period: { type: "string", enum: ["week", "month", "year"], default: "month" },
+        reference_date: { type: "string", format: "date" },
+        categories: {
+          type: "array",
+          items: { type: "string", minLength: 2, maxLength: 40 },
+          maxItems: 20,
+        },
+        product_groups: {
+          type: "array",
+          items: { type: "string", enum: productGroupKeys },
+          maxItems: 12,
+        },
+      },
+      additionalProperties: false,
+    },
+    outputSchema: {
+      type: "object",
+      properties: { breakdown: { type: "object", additionalProperties: true } },
+      required: ["breakdown"],
+      additionalProperties: false,
+    },
+    securitySchemes: oauthSecurity,
+    _meta: compatibilitySecurity,
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+  },
+  {
     name: "list_expenses",
     title: "Lister les dépenses Budgetia",
     description:
@@ -373,6 +512,29 @@ export interface AddExpenseInput {
   date: string;
   requestId?: string;
   budgetSpaceId?: string;
+}
+
+export interface AddReceiptExpenseInput {
+  category?: string;
+  merchant: string;
+  note: string;
+  date: string;
+  requestId?: string;
+  budgetSpaceId?: string;
+  items: Array<{
+    label: string;
+    amountCents: number;
+    productGroup: ProductGroupKey;
+  }>;
+}
+
+export interface ReceiptDetailsInput {
+  expenseId: string;
+  budgetSpaceId?: string;
+}
+
+export interface ProductBreakdownInput extends SummaryInput {
+  productGroups?: ProductGroupKey[];
 }
 
 export interface UpdateCategoryInput {
@@ -550,6 +712,118 @@ export function parseAddExpense(value: unknown, today = todayISO()): AddExpenseI
     date,
     ...(requestId ? { requestId } : {}),
     ...(budgetSpaceId ? { budgetSpaceId } : {}),
+  };
+}
+
+function productGroupValue(value: unknown, name: string): ProductGroupKey {
+  const result = textValue(value, name, { required: true, min: 2, max: 30 });
+  if (!productGroupKeys.includes(result as ProductGroupKey)) {
+    throw new Error(`${name} doit être un pôle produit Budgetia valide.`);
+  }
+  return result as ProductGroupKey;
+}
+
+export function parseAddReceiptExpense(
+  value: unknown,
+  today = todayISO(),
+): AddReceiptExpenseInput {
+  const input = record(value ?? {});
+  onlyKeys(input, [
+    "budget_space_id",
+    "category",
+    "merchant",
+    "note",
+    "date",
+    "request_id",
+    "items",
+  ]);
+  if (!Array.isArray(input.items) || input.items.length < 1 || input.items.length > 100) {
+    throw new Error("items doit contenir entre 1 et 100 lignes validées.");
+  }
+  const items = input.items.map((rawItem, index) => {
+    const item = record(rawItem);
+    onlyKeys(item, ["label", "amount", "product_group"]);
+    const label = textValue(item.label, `items[${index}].label`, {
+      required: true,
+      min: 1,
+      max: 120,
+    })!;
+    if (typeof item.amount !== "number" || !Number.isFinite(item.amount)) {
+      throw new Error(`items[${index}].amount doit être un nombre en euros.`);
+    }
+    const amountCents = Math.round((item.amount + Number.EPSILON) * 100);
+    if (amountCents < 1 || amountCents > 10_000_000_000) {
+      throw new Error(`items[${index}].amount est hors limites.`);
+    }
+    return {
+      label,
+      amountCents,
+      productGroup: productGroupValue(
+        item.product_group,
+        `items[${index}].product_group`,
+      ),
+    };
+  });
+  const category = textValue(input.category, "category", { min: 2, max: 40 });
+  const merchant = textValue(input.merchant, "merchant", { max: 80 }) ?? "";
+  const note = textValue(input.note, "note", { max: 160 }) ?? "";
+  const date = parseDate(input.date, "date") ?? today;
+  const requestId = textValue(input.request_id, "request_id", { min: 4, max: 100 });
+  const budgetSpaceId = uuidValue(input.budget_space_id, "budget_space_id");
+  return {
+    ...(category ? { category } : {}),
+    merchant,
+    note,
+    date,
+    ...(requestId ? { requestId } : {}),
+    ...(budgetSpaceId ? { budgetSpaceId } : {}),
+    items,
+  };
+}
+
+export function parseReceiptDetails(value: unknown): ReceiptDetailsInput {
+  const input = record(value ?? {});
+  onlyKeys(input, ["budget_space_id", "expense_id"]);
+  const expenseId = uuidValue(input.expense_id, "expense_id");
+  if (!expenseId) throw new Error("expense_id est requis.");
+  const budgetSpaceId = uuidValue(input.budget_space_id, "budget_space_id");
+  return { expenseId, ...(budgetSpaceId ? { budgetSpaceId } : {}) };
+}
+
+export function parseProductBreakdown(
+  value: unknown,
+  today = todayISO(),
+): ProductBreakdownInput {
+  const input = record(value ?? {});
+  onlyKeys(input, [
+    "budget_space_id",
+    "period",
+    "reference_date",
+    "categories",
+    "product_groups",
+  ]);
+  const summary = parseSummary({
+    ...(input.budget_space_id !== undefined
+      ? { budget_space_id: input.budget_space_id }
+      : {}),
+    ...(input.period !== undefined ? { period: input.period } : {}),
+    ...(input.reference_date !== undefined
+      ? { reference_date: input.reference_date }
+      : {}),
+    ...(input.categories !== undefined ? { categories: input.categories } : {}),
+  }, today);
+  let productGroups: ProductGroupKey[] | undefined;
+  if (input.product_groups !== undefined) {
+    if (!Array.isArray(input.product_groups) || input.product_groups.length > 12) {
+      throw new Error("product_groups doit contenir 12 pôles maximum.");
+    }
+    productGroups = input.product_groups.map((group, index) =>
+      productGroupValue(group, `product_groups[${index}]`)
+    );
+  }
+  return {
+    ...summary,
+    ...(productGroups?.length ? { productGroups } : {}),
   };
 }
 

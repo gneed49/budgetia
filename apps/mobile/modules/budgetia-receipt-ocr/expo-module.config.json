@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["BudgetiaReceiptOcrModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.budgetiareceiptocr.BudgetiaReceiptOcrModule"]
+  }
+}

@@ -30,6 +30,14 @@
     "plugins": [
       "expo-secure-store",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Autoriser Budgetia à sélectionner une photo de ticket.",
+          "cameraPermission": "Autoriser Budgetia à photographier un ticket.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/adaptive-icon.png",

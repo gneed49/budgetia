@@ -4,8 +4,11 @@ import {
   currentMonthRange,
   normalizeCategoryName,
   parseAddExpense,
+  parseAddReceiptExpense,
   parseDeleteCategory,
   parseListExpenses,
+  parseProductBreakdown,
+  parseReceiptDetails,
   parseSpaceSelection,
   parseSummary,
   parseUpdateCategory,
@@ -21,6 +24,9 @@ describe("Budgetia MCP contract", () => {
       "update_category",
       "delete_category",
       "add_expense",
+      "add_receipt_expense",
+      "get_receipt_details",
+      "get_product_breakdown",
       "list_expenses",
       "get_spending_summary",
     ]);
@@ -28,6 +34,54 @@ describe("Budgetia MCP contract", () => {
       expect(tool.securitySchemes).toEqual([{ type: "oauth2", scopes: ["email"] }]);
       expect(tool.inputSchema.additionalProperties).toBe(false);
     }
+  });
+
+  it("parses validated receipt lines and product analysis filters", () => {
+    expect(
+      parseAddReceiptExpense({
+        category: "Alimentation",
+        merchant: "Marché central",
+        date: "2026-08-26",
+        request_id: "receipt-chatgpt-1",
+        items: [
+          { label: "Pommes", amount: 3.2, product_group: "fruits_vegetables" },
+          { label: "Shampoing", amount: 5.8, product_group: "hygiene" },
+        ],
+      }),
+    ).toMatchObject({
+      category: "Alimentation",
+      merchant: "Marché central",
+      date: "2026-08-26",
+      requestId: "receipt-chatgpt-1",
+      items: [
+        { label: "Pommes", amountCents: 320, productGroup: "fruits_vegetables" },
+        { label: "Shampoing", amountCents: 580, productGroup: "hygiene" },
+      ],
+    });
+    expect(
+      parseProductBreakdown({
+        period: "month",
+        product_groups: ["hygiene", "household"],
+      }, "2026-08-26"),
+    ).toMatchObject({
+      period: "month",
+      referenceDate: "2026-08-26",
+      productGroups: ["hygiene", "household"],
+    });
+    expect(() =>
+      parseAddReceiptExpense({
+        items: [{ label: "Article", amount: 2, product_group: "invented" }],
+      }),
+    ).toThrow("pôle produit");
+  });
+
+  it("requires a valid expense ID for receipt details", () => {
+    expect(
+      parseReceiptDetails({
+        expense_id: "33333333-3333-4333-8333-333333333333",
+      }),
+    ).toEqual({ expenseId: "33333333-3333-4333-8333-333333333333" });
+    expect(() => parseReceiptDetails({ expense_id: "unknown" })).toThrow("UUID");
   });
 
   it("parses a precise and retry-safe expense", () => {

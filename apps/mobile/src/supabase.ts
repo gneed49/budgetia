@@ -15,7 +15,7 @@ export const supabaseUrl = configuredUrl ?? "http://127.0.0.1:54321";
 
 export const supabase = createClient(
   supabaseUrl,
-  configuredKey ?? "sb_publishable_budgetia_not_configured",
+  configuredKey ?? "missing-publishable-key",
   {
     auth: {
       ...(Platform.OS !== "web" ? { storage: AsyncStorage } : {}),

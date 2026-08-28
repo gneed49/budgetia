@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(86);
+select plan(104);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -24,6 +24,14 @@ select has_table('public', 'budget_invitations', 'budget invitations table exist
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'expenses', 'expenses table exists');
 select has_table('public', 'budget_settings', 'budget settings table exists');
+select has_table('public', 'receipts', 'receipts table exists');
+select has_table('public', 'receipt_items', 'receipt items table exists');
+select ok(
+  has_table_privilege('authenticated', 'public.receipts', 'SELECT')
+  and not has_table_privilege('authenticated', 'public.receipts', 'INSERT')
+  and not has_table_privilege('authenticated', 'public.receipt_items', 'INSERT'),
+  'receipt writes are restricted to the validated RPC'
+);
 select ok(
   has_column_privilege('authenticated', 'public.expenses', 'amount_cents', 'UPDATE')
   and has_column_privilege('authenticated', 'public.expenses', 'category_id', 'UPDATE')
@@ -150,6 +158,68 @@ select is(
   (public.get_budgetia_spending_summary('month', '2026-08-26', null, null)->>'totalCents')::bigint,
   1250::bigint,
   'personal summary aggregates the personal expense'
+);
+
+select lives_ok(
+  $$select public.create_budgetia_receipt_expense(
+    (select id from public.categories where name = 'Alimentation'),
+    '[{"label":"Pommes","amount_cents":320,"product_group":"fruits_vegetables"},{"label":"Shampoing","amount_cents":580,"product_group":"hygiene"}]'::jsonb,
+    'Marché test', 'Ticket contrôlé', '2026-08-26', 'mobile',
+    'receipt-personal-1', null
+  )$$,
+  'Alice can create one expense with validated receipt items'
+);
+select is(
+  (select count(*)::integer from public.receipts),
+  1,
+  'one receipt is attached to the expense'
+);
+select is(
+  (select count(*)::integer from public.receipt_items),
+  2,
+  'the validated receipt keeps its two item lines'
+);
+select is(
+  (select sum(amount_cents)::bigint from public.receipt_items),
+  900::bigint,
+  'receipt items preserve their exact cent total'
+);
+select is(
+  (public.get_budgetia_product_breakdown('month', '2026-08-26', null, null, null)->>'totalCents')::bigint,
+  900::bigint,
+  'the monthly product breakdown totals receipt lines'
+);
+select is(
+  jsonb_array_length(public.get_budgetia_product_breakdown(
+    'month', '2026-08-26', null, null, null
+  )->'productGroups'),
+  2,
+  'the product breakdown separates the two validated groups'
+);
+select is(
+  (
+    select count(*)::integer from public.expenses
+    where request_id = 'receipt-personal-1'
+  ),
+  1,
+  'a receipt request ID is retry safe'
+);
+select throws_ok(
+  $$update public.expenses set amount_cents = 999
+    where request_id = 'receipt-personal-1'$$,
+  '22023',
+  'receipt total is controlled by its validated items',
+  'a normal expense update cannot desynchronize a receipt total'
+);
+select throws_ok(
+  $$select public.create_budgetia_receipt_expense(
+    (select id from public.categories where name = 'Alimentation'),
+    '[{"label":"Inconnu","amount_cents":100,"product_group":"invented"}]'::jsonb,
+    '', '', '2026-08-26', 'mobile', 'receipt-invalid-group', null
+  )$$,
+  '22023',
+  'invalid product group',
+  'unknown product groups are rejected before financial data is written'
 );
 
 select is_empty(
@@ -382,6 +452,22 @@ select throws_ok(
   null,
   'Bob cannot write into Alice personal space'
 );
+select is(
+  (select count(*)::integer from public.receipts),
+  0,
+  'Bob cannot read Alice personal receipt'
+);
+select throws_ok(
+  $$select public.create_budgetia_receipt_expense(
+    (select id from public.categories where name = 'Alimentation'),
+    '[{"label":"Interdit","amount_cents":100,"product_group":"other"}]'::jsonb,
+    '', '', '2026-08-26', 'mobile', 'receipt-cross-space',
+    current_setting('test.alice_space_id')::uuid
+  )$$,
+  '42501',
+  'budget membership required',
+  'Bob cannot create a receipt in Alice personal space'
+);
 select lives_ok(
   $$select public.accept_budget_invitation(
     (select id from public.budget_invitations where email = 'bob@budgetia.test')
@@ -409,6 +495,17 @@ select lives_ok(
     (select id from public.budget_spaces where name = 'Budget du couple')
   )$$,
   'Bob can add an expense to the shared budget'
+);
+select lives_ok(
+  $$select public.create_budgetia_receipt_expense(
+    (select id from public.categories
+     where name = 'Alimentation'
+       and space_id = (select id from public.budget_spaces where name = 'Budget du couple')),
+    '[{"label":"Légumes","amount_cents":700,"product_group":"fruits_vegetables"}]'::jsonb,
+    'Primeur', 'Ticket commun', '2026-08-26', 'mobile', 'receipt-shared-bob',
+    (select id from public.budget_spaces where name = 'Budget du couple')
+  )$$,
+  'Bob can add a receipt to a shared budget'
 );
 select lives_ok(
   $$update public.expenses
@@ -448,7 +545,7 @@ select is(
     'month', '2026-08-26', null,
     (select id from public.budget_spaces where name = 'Budget du couple')
   )->>'totalCents')::bigint,
-  2450::bigint,
+  3150::bigint,
   'Bob reads the shared total'
 );
 
@@ -464,12 +561,18 @@ select is(
     'month', '2026-08-26', null,
     (select id from public.budget_spaces where name = 'Budget du couple')
   )->>'totalCents')::bigint,
-  2450::bigint,
+  3150::bigint,
   'Alice sees the expense added by Bob to their shared space'
 );
 select is(
+  (select count(*)::integer from public.receipts
+   where space_id = (select id from public.budget_spaces where name = 'Budget du couple')),
+  1,
+  'Alice can read the receipt added by Bob to their shared budget'
+);
+select is(
   (public.get_budgetia_spending_summary('month', '2026-08-26', null, null)->>'totalCents')::bigint,
-  1250::bigint,
+  2150::bigint,
   'Alice personal summary remains isolated from the shared budget'
 );
 select is(
@@ -500,15 +603,15 @@ select is(
   'both members can be listed from inside the shared budget'
 );
 select lives_ok(
-  $$select public.create_budgetia_expense(
-    980,
+  $$select public.create_budgetia_receipt_expense(
     (select id from public.categories
      where name = 'Logement'
        and space_id = (select id from public.budget_spaces where name = 'Budget du couple')),
-    'Dépense conservée', '2026-08-27', 'mobile', 'shared-alice-kept',
+    '[{"label":"Produit commun","amount_cents":980,"product_group":"household"}]'::jsonb,
+    'Maison', 'Dépense conservée', '2026-08-27', 'mobile', 'shared-alice-kept',
     (select id from public.budget_spaces where name = 'Budget du couple')
   )$$,
-  'Alice can add a shared expense before deleting her account'
+  'Alice can add a shared receipt before deleting her account'
 );
 select is(
   (public.get_account_deletion_impact()->>'sharedExpenseCountKept')::integer,
@@ -709,6 +812,14 @@ select is(
   'the deleted account shared expense remains anonymously'
 );
 select is(
+  (select receipt.created_by
+   from public.receipts as receipt
+   join public.expenses as expense on expense.id = receipt.expense_id
+   where expense.request_id = 'shared-alice-kept'),
+  null,
+  'the preserved shared receipt is anonymized with its expense'
+);
+select is(
   (select count(*)::integer from public.budget_space_members
    where user_id = '11111111-1111-4111-8111-111111111111'),
   0,
@@ -730,6 +841,10 @@ select has_index(
 select has_index(
   'public', 'expenses', 'expenses_user_id_idx',
   'expense user foreign key has a covering index'
+);
+select has_index(
+  'public', 'receipts', 'receipts_space_expense_idx',
+  'receipt expense foreign key has a covering index'
 );
 
 select * from finish();

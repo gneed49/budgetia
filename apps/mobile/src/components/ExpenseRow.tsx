@@ -16,6 +16,7 @@ export function ExpenseRow(props: {
   expense: Expense;
   onEdit?: (expense: Expense) => void;
   onDelete?: (expense: Expense) => void;
+  onOpenReceipt?: (expense: Expense) => void;
 }) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
@@ -41,6 +42,17 @@ export function ExpenseRow(props: {
         </Text>
       </View>
       <Text style={styles.amount}>{formatMoney(expense.amountCents)}</Text>
+      {expense.hasReceipt && props.onOpenReceipt ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Voir le ticket de ${expense.note || expense.categoryName}`}
+          hitSlop={8}
+          onPress={() => props.onOpenReceipt?.(expense)}
+          style={({ pressed }) => [styles.receiptAction, pressed && styles.pressed]}
+        >
+          <Ionicons name="receipt" size={18} color={colors.onPrimary} />
+        </Pressable>
+      ) : null}
       {props.onEdit ? (
         <Pressable
           accessibilityRole="button"
@@ -97,6 +109,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+  },
+  receiptAction: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.round,
+    backgroundColor: colors.mintDark,
   },
   pressed: { opacity: 0.6 },
 });

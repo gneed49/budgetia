@@ -15,6 +15,7 @@ import {
 import { BudgetApi, listBudgetSpaces, type BudgetSpace } from "./src/api";
 import { AddExpenseModal } from "./src/components/AddExpenseModal";
 import { BudgetSpaceBar } from "./src/components/BudgetSpaceBar";
+import { ReceiptScannerModal } from "./src/components/ReceiptScannerModal";
 import { useOverview } from "./src/hooks";
 import { AnalyticsScreen } from "./src/screens/AnalyticsScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
@@ -93,6 +94,7 @@ function BudgetiaWorkspace(props: {
   const styles = useThemeStyles(createStyles);
   const [tab, setTab] = useState<Tab>("home");
   const [addVisible, setAddVisible] = useState(false);
+  const [receiptVisible, setReceiptVisible] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const api = useMemo(
     () => new BudgetApi(props.activeSpace.id),
@@ -192,6 +194,17 @@ function BudgetiaWorkspace(props: {
         api={api}
         categories={overview.categories}
         onClose={() => setAddVisible(false)}
+        onSaved={refreshAll}
+        onScanReceipt={() => {
+          setAddVisible(false);
+          setReceiptVisible(true);
+        }}
+      />
+      <ReceiptScannerModal
+        visible={receiptVisible}
+        api={api}
+        categories={overview.categories}
+        onClose={() => setReceiptVisible(false)}
         onSaved={refreshAll}
       />
     </>

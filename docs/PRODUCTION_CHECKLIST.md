@@ -11,7 +11,9 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 - [x] Budget personnel et budgets partagés avec rôles propriétaire/membre.
 - [x] Gestion propriétaire : invitations, retrait, transfert de propriété, renommage et suppression.
 - [x] Export CSV et suppression du compte avec aperçu d’impact.
-- [x] MCP métier avec OAuth, ciblage explicite du budget et écritures idempotentes.
+- [x] MCP métier authentifié par JWT/RLS, ciblage explicite du budget et écritures idempotentes.
+- [x] Tickets détaillés : OCR local, validation humaine, somme atomique et pôles produit.
+- [x] Outils MCP de ticket avec confirmation d’écriture et analyses filtrées.
 - [ ] Parcours visuel complet validé sur un téléphone Android physique.
 - [ ] Parcours accessibilité vérifié avec TalkBack et taille de police agrandie.
 
@@ -19,14 +21,15 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 
 - [x] Migrations rejouables sur une base locale vierge.
 - [x] Tests pgTAP RLS et cycle de vie des espaces/comptes.
-- [x] Smoke tests HTTP du MCP et de la suppression de compte.
+- [x] Smoke tests HTTP des onze outils MCP, des tickets et de la suppression de compte avec un compte de production éphémère nettoyé.
 - [x] Audit npm relu : aucune alerte haute ou critique. Les alertes modérées actuelles viennent de `uuid@7` via l’outil de build Expo `xcode`; le correctif forcé imposerait un downgrade incompatible et n’est pas appliqué.
 - [x] Projet Supabase de production `Budgetia` créé en région `eu-west-3`.
-- [x] Six migrations appliquées et listées sur le projet distant, dont les index couvrant toutes les clés étrangères.
+- [x] Huit migrations appliquées et listées sur le projet distant, dont les tables de tickets et les index couvrant toutes les clés étrangères.
 - [x] Edge Functions `budgetia-mcp` et `delete-account` déployées et actives.
 - [x] Secret Edge Function `BUDGETIA_PUBLIC_SUPABASE_URL` configuré avec l’URL publique réelle.
 - [x] URL et clé publishable configurées dans les secrets GitHub du build APK ; aucune clé privilégiée n’est injectée dans Expo.
-- [x] Advisories relus : aucun défaut RLS exposé ; douze avertissements `SECURITY DEFINER` correspondent aux RPC authentifiées explicitement contrôlées et documentées dans `SECURITY.md`.
+- [x] Advisories relus : aucun défaut RLS ou clé étrangère non indexée ; treize avertissements `SECURITY DEFINER` correspondent aux RPC authentifiées explicitement contrôlées et documentées dans `SECURITY.md`.
+- [ ] Serveur OAuth 2.1 Supabase et enregistrement dynamique des clients activés ; tant que ses endpoints `/.well-known` répondent `404`, ChatGPT ne peut pas terminer la découverte même si les outils MCP sont opérationnels avec un Bearer token.
 - [ ] URL HTTPS du client OAuth déployée et ajoutée aux redirections Auth.
 - [ ] Confirmations e-mail activées et SMTP de production testé.
 - [ ] Protection CAPTCHA et limites Auth évaluées selon l’exposition publique.
@@ -56,6 +59,7 @@ Le script `./scripts/configure-production.sh` guide la configuration reproductib
 - [ ] Variables `EXPO_PUBLIC_SUPABASE_*` configurées dans les environnements EAS `preview` et `production`.
 - [ ] `EXPO_TOKEN` ajouté comme secret GitHub et workflow EAS activé avec `EAS_PRODUCTION_ENABLED=true`.
 - [ ] APK EAS installé et testé sur un appareil réel.
+- [ ] Trois tickets réels (net, froissé et faible lumière) scannés, corrigés puis rouverts sur appareil.
 - [ ] AAB `production` accepté par la piste de test interne Google Play.
 - [ ] Fiche Play Store, captures, icône, classification du contenu et formulaire sécurité des données finalisés.
 

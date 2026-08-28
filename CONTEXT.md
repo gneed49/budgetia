@@ -32,6 +32,18 @@ _Avoid_: Catégorie système, catégorie supprimable
 Le reclassement de toutes les dépenses d’une catégorie vers une autre catégorie du même espace budgétaire.
 _Avoid_: Fusion inter-budgets, déplacement partiel
 
+**Ticket de caisse**:
+Le détail validé d’un achat, rattaché à une seule dépense. Budgetia n’enregistre pas la photo : il conserve le commerçant et les lignes corrigées par la personne.
+_Avoid_: Facture stockée, catégorie de dépense
+
+**Ligne de ticket**:
+Un produit ou un service relevé sur un ticket avec son libellé, son montant et son pôle produit. La somme des lignes doit toujours être égale au montant de la dépense.
+_Avoid_: Dépense indépendante, texte OCR brut
+
+**Pôle produit**:
+Un regroupement analytique stable d’articles, par exemple fruits et légumes, hygiène ou entretien. Il détaille le contenu d’une dépense sans remplacer les catégories personnalisées de l’espace budgétaire.
+_Avoid_: Sous-catégorie personnalisée, catégorie enfant
+
 **Plafond de catégorie**:
 Le montant cible maximal attribué à une catégorie pour un mois donné dans un espace budgétaire.
 _Avoid_: Limite bancaire, blocage de paiement

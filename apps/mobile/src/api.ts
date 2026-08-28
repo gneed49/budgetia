@@ -5,6 +5,10 @@ import {
   type Category,
   type Expense,
   type Period,
+  type ProductBreakdown,
+  type ProductGroup,
+  type ReceiptDetails,
+  type ReceiptItemDraft,
   type SpendingSummary,
 } from "@budgetia/domain";
 
@@ -120,6 +124,24 @@ interface ExpenseRow {
   created_at: string;
   updated_at: string;
   category: ExpenseCategoryRow | ExpenseCategoryRow[] | null;
+  receipt?: { id: string } | Array<{ id: string }> | null;
+}
+
+interface ReceiptItemRow {
+  id: string;
+  label: string;
+  amount_cents: number;
+  product_group: ProductGroup;
+  position: number;
+}
+
+interface ReceiptRow {
+  id: string;
+  expense_id: string;
+  merchant: string;
+  source: "mobile" | "chatgpt";
+  created_at: string;
+  items: ReceiptItemRow[] | null;
 }
 
 interface SupabaseFailure {
@@ -146,7 +168,7 @@ interface CategoryDeleteRpcRow {
 }
 
 const EXPENSE_COLUMNS =
-  "id,amount_cents,category_id,note,spent_at,source,created_at,updated_at,category:categories!expenses_space_category_fkey(name,color,icon)";
+  "id,amount_cents,category_id,note,spent_at,source,created_at,updated_at,category:categories!expenses_space_category_fkey(name,color,icon),receipt:receipts!receipts_space_expense_fkey(id)";
 
 export class ApiError extends Error {
   constructor(
@@ -172,6 +194,11 @@ function toApiError(error: SupabaseFailure, fallback: string): ApiError {
     return new ApiError("La catégorie choisie n’est plus disponible.", 409);
   }
   if (error.code === "23514" || error.code === "22023") {
+    if (message.includes("receipt total")) {
+      return new ApiError(
+        "Le montant d’un ticket dépend de ses lignes. Ouvrez le détail du ticket pour le modifier.",
+      );
+    }
     return new ApiError("Les informations saisies ne sont pas valides.");
   }
   return new ApiError(fallback);
@@ -203,6 +230,9 @@ function mapExpense(row: ExpenseRow): Expense {
     source: row.source,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    hasReceipt: Array.isArray(row.receipt)
+      ? row.receipt.length > 0
+      : Boolean(row.receipt),
   };
 }
 
@@ -635,6 +665,104 @@ export class BudgetApi {
       );
     }
     return this.getExpense((data as { id: string }).id);
+  }
+
+  async addReceiptExpense(input: {
+    categoryId: string;
+    merchant?: string;
+    note?: string;
+    spentAt: string;
+    requestId?: string;
+    items: ReceiptItemDraft[];
+  }): Promise<Expense> {
+    getPeriodRange("month", input.spentAt);
+    if (!input.items.length || input.items.length > 100) {
+      throw new ApiError("Un ticket doit contenir entre 1 et 100 lignes.");
+    }
+    const note = input.note?.trim() ?? "";
+    if (note.length > 160) throw new ApiError("La note est limitée à 160 caractères.");
+    const merchant = input.merchant?.trim() ?? "";
+    if (merchant.length > 80) {
+      throw new ApiError("Le nom du commerçant est limité à 80 caractères.");
+    }
+    const { data, error } = await supabase.rpc("create_budgetia_receipt_expense", {
+      p_category_id: input.categoryId,
+      p_items: input.items.map((item) => ({
+        label: item.label.trim(),
+        amount_cents: item.amountCents,
+        product_group: item.productGroup,
+      })),
+      p_merchant: merchant,
+      p_note: note,
+      p_spent_at: input.spentAt,
+      p_source: "mobile",
+      p_request_id: input.requestId ?? null,
+      p_space_id: this.spaceId,
+    });
+    if (error || !data) {
+      throw toApiError(
+        error ?? { message: "missing receipt" },
+        "Impossible d’enregistrer le ticket.",
+      );
+    }
+    return this.getExpense((data as { expenseId: string }).expenseId);
+  }
+
+  async getReceiptDetails(expenseId: string): Promise<ReceiptDetails> {
+    const { data, error } = await supabase
+      .from("receipts")
+      .select(
+        "id,expense_id,merchant,source,created_at,items:receipt_items(id,label,amount_cents,product_group,position)",
+      )
+      .eq("space_id", this.spaceId)
+      .eq("expense_id", expenseId)
+      .order("position", { referencedTable: "receipt_items", ascending: true })
+      .single();
+    if (error || !data) {
+      throw toApiError(
+        error ?? { message: "missing receipt" },
+        "Détail du ticket indisponible.",
+      );
+    }
+    const row = data as unknown as ReceiptRow;
+    return {
+      id: row.id,
+      expenseId: row.expense_id,
+      merchant: row.merchant,
+      source: row.source,
+      createdAt: row.created_at,
+      items: (row.items ?? [])
+        .map((item) => ({
+          id: item.id,
+          label: item.label,
+          amountCents: Number(item.amount_cents),
+          productGroup: item.product_group,
+          position: Number(item.position),
+        }))
+        .sort((left, right) => left.position - right.position),
+    };
+  }
+
+  async getProductBreakdown(input: {
+    period: Period;
+    referenceDate: string;
+    categoryIds?: string[];
+    productGroups?: ProductGroup[];
+  }): Promise<ProductBreakdown> {
+    const { data, error } = await supabase.rpc("get_budgetia_product_breakdown", {
+      p_period: input.period,
+      p_reference_date: input.referenceDate,
+      p_category_ids: input.categoryIds?.length ? input.categoryIds : null,
+      p_product_groups: input.productGroups?.length ? input.productGroups : null,
+      p_space_id: this.spaceId,
+    });
+    if (error || !data) {
+      throw toApiError(
+        error ?? { message: "missing breakdown" },
+        "Impossible d’analyser les pôles produit.",
+      );
+    }
+    return data as ProductBreakdown;
   }
 
   async updateExpense(

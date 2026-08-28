@@ -34,6 +34,7 @@ export function AddExpenseModal(props: {
   api: BudgetApi;
   categories: Category[];
   expense?: Expense | null;
+  onScanReceipt?: () => void;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -129,6 +130,22 @@ export function AddExpenseModal(props: {
           </View>
 
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            {!props.expense && props.onScanReceipt ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={props.onScanReceipt}
+                style={({ pressed }) => [styles.scanAction, pressed && styles.pressed]}
+              >
+                <View style={styles.scanIcon}>
+                  <Ionicons name="scan" size={23} color={colors.mintDark} />
+                </View>
+                <View style={styles.scanCopy}>
+                  <Text style={styles.scanTitle}>Scanner un ticket</Text>
+                  <Text style={styles.scanSubtitle}>Lignes et pôles produit proposés automatiquement</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={19} color={colors.muted} />
+              </Pressable>
+            ) : null}
             <Text style={styles.label}>Montant</Text>
             <View style={styles.amountField}>
               <TextInput
@@ -303,6 +320,29 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     fontWeight: "800",
   },
+  scanAction: {
+    minHeight: 72,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    backgroundColor: colors.mintSoft,
+  },
+  scanIcon: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.round,
+    backgroundColor: colors.surface,
+  },
+  scanCopy: { flex: 1 },
+  scanTitle: { color: colors.ink, fontSize: 15, fontWeight: "900" },
+  scanSubtitle: { marginTop: 3, color: colors.muted, fontSize: 11 },
   amountField: {
     height: 72,
     flexDirection: "row",

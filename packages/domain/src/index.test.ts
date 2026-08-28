@@ -1,14 +1,47 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  classifyProductGroup,
   getPeriodRange,
   getPreviousPeriodRange,
   normalizeCategoryName,
   parseMoneyToCents,
+  parseReceiptText,
   summarizeExpenses,
   type Category,
   type Expense,
 } from "./index";
+
+describe("receipt analysis", () => {
+  it("extracts product lines, a merchant, a total and deterministic groups", () => {
+    const result = parseReceiptText(`SUPER MARCHÉ\n26/08/2026 18:32\nPOMMES GOLDEN 3,20 €\nSHAMPOING DOUX 5,80\nTOTAL 9,00 EUR\nCB 9,00`);
+    expect(result).toMatchObject({
+      merchant: "SUPER MARCHÉ",
+      detectedTotalCents: 900,
+      items: [
+        { label: "POMMES GOLDEN", amountCents: 320, productGroup: "fruits_vegetables" },
+        { label: "SHAMPOING DOUX", amountCents: 580, productGroup: "hygiene" },
+      ],
+      warnings: [],
+    });
+  });
+
+  it("associates an amount isolated on the following line", () => {
+    expect(parseReceiptText("ÉPICERIE TEST\nBAGUETTE TRADITION\n1,20").items).toEqual([
+      { label: "BAGUETTE TRADITION", amountCents: 120, productGroup: "bakery" },
+    ]);
+  });
+
+  it("warns instead of inventing a reconciliation line", () => {
+    const result = parseReceiptText("MAGASIN\nTOMATES 2,00\nTOTAL 3,00");
+    expect(result.items).toHaveLength(1);
+    expect(result.warnings[0]).toContain("diffère");
+  });
+
+  it("falls back to other for unknown labels", () => {
+    expect(classifyProductGroup("Article spécial ZX42")).toBe("other");
+  });
+});
 
 const categories: Category[] = [
   {

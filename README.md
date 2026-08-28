@@ -22,6 +22,9 @@ Budgetia est une application Expo / React Native pour saisir des dépenses, cré
 - filtres multi-catégories sur les périodes passées ;
 - vue annuelle avec détail cliquable de chaque mois ;
 - historique filtrable et suppression d’une dépense ;
+- scan privé d’un ticket sur Android/iOS, avec OCR local et vérification humaine ;
+- une dépense globale par ticket, détaillée en lignes et pôles produit (alimentation, hygiène, entretien, etc.) ;
+- détail d’un ticket et répartition par pôle directement depuis l’historique ;
 - export CSV complet du budget sélectionné et suppression autonome du compte ;
 - MCP privé pour ajouter, lister et analyser les dépenses depuis ChatGPT ;
 - OAuth 2.1 Supabase avec PKCE et écran de consentement Budgetia.
@@ -32,6 +35,8 @@ La conception de la prochaine évolution — plafonds mensuels par catégorie et
 
 ```text
 App Expo / React Native ── Supabase Auth JWT ──┐
+        │                                       │
+        └── OCR local ML Kit / Vision           │
                                                ├── Data API ── PostgreSQL
 ChatGPT ── OAuth 2.1 ── Edge Function MCP ─────┘               │
                                                                ├── espaces + membres
@@ -42,7 +47,9 @@ App web Expo /oauth/consent ── approuve ou refuse l’accès ChatGPT
 
 PostgreSQL est la source de vérité. Les règles RLS rendent les catégories, dépenses et réglages visibles uniquement aux membres de l’espace concerné. Une invitation en attente révèle seulement son libellé au destinataire ; elle n’ouvre aucun accès aux données avant acceptation. L’Edge Function transmet le JWT OAuth de l’utilisateur à la Data API : elle n’utilise ni `service_role` ni contournement de la RLS.
 
-Le MCP Supabase officiel reste un outil d’administration pour développer le projet. Il n’est volontairement pas exposé aux utilisateurs ni à ChatGPT ; Budgetia fournit son propre MCP métier limité à huit outils.
+Le MCP Supabase officiel reste un outil d’administration pour développer le projet. Il n’est volontairement pas exposé aux utilisateurs ni à ChatGPT ; Budgetia fournit son propre MCP métier limité à onze outils.
+
+Un ticket est rattaché à une seule dépense. Sa catégorie reste celle choisie dans le budget, tandis que ses lignes utilisent des pôles produit analytiques communs. Sur mobile, l’image est lue sur l’appareil avec ML Kit (Android) ou Vision (iOS), puis oubliée. Supabase reçoit uniquement le commerçant et les lignes corrigées dont la somme est vérifiée côté base.
 
 ## Démarrage local
 
@@ -70,13 +77,15 @@ Dans **Réglages → Catégories**, touchez une ligne pour ouvrir son gestionnai
 
 Dans **Réglages → Budgets partagés**, créez un espace commun puis saisissez l’adresse du partenaire. L’invitation est enregistrée dans Budgetia ; elle n’envoie pas encore d’e-mail externe. Lorsque la personne crée ou ouvre un compte avec cette adresse, elle voit l’invitation et peut la rejoindre.
 
-Pour Expo Go ou un émulateur :
+Pour le Web ou un émulateur :
 
 ```bash
 npm run start --workspace @budgetia/mobile
 # ou
 npm run android --workspace @budgetia/mobile
 ```
+
+Le scan OCR utilise un module natif local et demande donc un build Android/iOS (`npm run android`, APK GitHub ou EAS). Il n’est pas disponible dans Expo Go ni dans le build Web ; la saisie manuelle des lignes reste proposée. Aucun compte ou aucune clé OpenAI n’est nécessaire pour analyser un ticket.
 
 Sur un téléphone physique, remplacez `127.0.0.1` par une URL Supabase accessible depuis le téléphone. Le projet Supabase local reste surtout destiné au navigateur et aux émulateurs correctement configurés.
 
@@ -114,6 +123,15 @@ Puis poussez la configuration :
 ```bash
 npx supabase config push
 ```
+
+Dans **Supabase Dashboard → Authentication → OAuth Server**, activez ensuite le serveur OAuth 2.1 et l’enregistrement dynamique des clients. Vérifiez les deux endpoints avant de connecter ChatGPT :
+
+```text
+https://VOTRE_REF.supabase.co/.well-known/oauth-authorization-server/auth/v1
+https://VOTRE_REF.supabase.co/auth/v1/.well-known/oauth-authorization-server
+```
+
+Au moins une forme prise en charge par la version Supabase déployée doit renvoyer un document JSON et non `404`. L’écran de consentement HTTPS configuré ci-dessus doit aussi être accessible ; l’activation du serveur seule ne suffit pas.
 
 En production, activez les confirmations e-mail, configurez un SMTP fiable et, si vous demandez le scope `openid`, migrez les JWT vers une clé asymétrique. Budgetia ne demande actuellement que le scope standard `email`, car Supabase Auth ne prend pas encore en charge les scopes OAuth métier personnalisés.
 
@@ -206,6 +224,8 @@ Exemples :
 - « Combien ai-je dépensé en alimentation ce mois-ci ? »
 - « Compare cette semaine à la semaine précédente. »
 - « Détaille janvier uniquement pour Logement et Abonnements. »
+- « Lis ce ticket, montre-moi les lignes et leurs pôles, puis attends ma confirmation avant de l’ajouter. »
+- « Combien ai-je dépensé en hygiène et entretien ce mois-ci d’après mes tickets ? »
 
 ### Outils MCP
 
@@ -217,10 +237,13 @@ Exemples :
 | `update_category` | Renomme/recolore une catégorie et peut transférer toutes ses dépenses |
 | `delete_category` | Supprime une catégorie après choix explicite : transfert ou suppression des dépenses |
 | `add_expense` | Ajoute une dépense, avec `request_id` pour un retry sûr |
+| `add_receipt_expense` | Ajoute, après confirmation explicite, une dépense et les lignes validées d’un ticket |
+| `get_receipt_details` | Renvoie le commerçant et les lignes d’un ticket à partir de l’identifiant de dépense |
+| `get_product_breakdown` | Analyse les tickets par pôle produit, période et catégories filtrées |
 | `list_expenses` | Liste les dépenses d’un budget, d’une période et de catégories précises |
 | `get_spending_summary` | Renvoie total, budget restant, comparaison, catégories et série temporelle |
 
-Les sept outils portant sur les données acceptent `budget_space_id`. Sans ce paramètre, ils ciblent le budget personnel. Pour un budget partagé, ChatGPT doit d’abord appeler `list_budget_spaces`, lever toute ambiguïté avec l’utilisateur puis transmettre explicitement l’identifiant. `add_expense` accepte une catégorie omise et classe alors la dépense dans la catégorie de secours du budget.
+Les dix outils portant sur les données acceptent `budget_space_id`. Sans ce paramètre, ils ciblent le budget personnel. Pour un budget partagé, ChatGPT doit d’abord appeler `list_budget_spaces`, lever toute ambiguïté avec l’utilisateur puis transmettre explicitement l’identifiant. `add_expense` et `add_receipt_expense` acceptent une catégorie omise et classent alors la dépense dans la catégorie de secours du budget. Pour un ticket, ChatGPT doit montrer la proposition structurée et attendre une confirmation explicite avant l’écriture.
 
 Le serveur accepte le protocole MCP `2025-11-25` et la révision stateless `2026-07-28`.
 
@@ -233,8 +256,8 @@ npm run supabase:test
 npm run smoke:local
 ```
 
-- Vitest couvre les calculs de période et le contrat MCP.
-- pgTAP couvre le provisioning, l’idempotence, les agrégats, les invitations, l’adhésion, les transferts/suppressions atomiques, la catégorie de secours, les index et l’isolation personnelle/partagée par RLS.
+- Vitest couvre les calculs de période, l’analyse déterministe des tickets et le contrat MCP.
+- pgTAP couvre le provisioning, l’idempotence, les agrégats, les invitations, l’adhésion, les tickets, leurs sommes, les transferts/suppressions atomiques, la catégorie de secours, les index et l’isolation personnelle/partagée par RLS.
 - Le build web vérifie l’intégration Expo.
 
 Un build local et des tests protocole ne prouvent pas une connexion réelle depuis ChatGPT ni un lancement sur téléphone physique. Ces deux validations nécessitent le projet Supabase déployé, une URL HTTPS et une autorisation interactive.
@@ -242,8 +265,8 @@ Un build local et des tests protocole ne prouvent pas une connexion réelle depu
 ## Structure
 
 ```text
-apps/mobile/                     application Expo, auth et écran OAuth
-packages/domain/                 périodes, montants et types partagés
+apps/mobile/                     application Expo, auth, OCR local et écran OAuth
+packages/domain/                 périodes, montants, analyse de tickets et types partagés
 supabase/migrations/             schéma PostgreSQL, fonctions et RLS
 supabase/functions/budgetia-mcp/ MCP HTTP pour ChatGPT
 supabase/functions/delete-account/ suppression authentifiée du compte

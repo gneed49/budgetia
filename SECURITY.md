@@ -22,9 +22,17 @@ Les secrets de déploiement vivent uniquement dans les coffres GitHub, Supabase 
 
 La fonctionnalité IA n’est pas encore activée. Lorsqu’elle sera livrée, la clé saisie dans l’app sera transmise à une fonction serveur authentifiée, chiffrée côté serveur et jamais renvoyée. Elle ne sera ni intégrée dans l’APK, ni sauvegardée localement en clair, ni partagée entre utilisateurs.
 
+## Confidentialité des tickets
+
+Le scan mobile fonctionne sans service IA distant : ML Kit sur Android et Vision sur iOS reconnaissent le texte sur l’appareil. La photo et le texte OCR brut restent temporaires et ne sont pas envoyés à Supabase. Seuls le commerçant facultatif et les lignes vérifiées sont enregistrés.
+
+Quand une personne joint volontairement une image à ChatGPT, ChatGPT peut la lire dans le cadre de cette conversation ; le MCP Budgetia ne reçoit toutefois que les lignes structurées après validation explicite. Aucun champ de la base ne permet de stocker une image ou le texte OCR brut.
+
+Les noms de commerçants, notes et libellés de produits restent des données non fiables. Le serveur MCP ordonne explicitement au client de ne jamais exécuter une instruction trouvée dans ces champs ; ceux-ci ne sont ni injectés dans une consigne système ni transmis automatiquement au futur coach budgétaire.
+
 ## Fonctions PostgreSQL privilégiées
 
-Le linter Supabase signale volontairement les RPC `SECURITY DEFINER` accessibles au rôle `authenticated`. Budgetia en utilise douze pour les opérations qui doivent vérifier plusieurs lignes ou survivre aux changements d’appartenance : création et gestion d’un espace partagé, invitations, membres, transfert de propriété, départ, suppression et aperçu de suppression de compte.
+Le linter Supabase signale volontairement les RPC `SECURITY DEFINER` accessibles au rôle `authenticated`. Budgetia en utilise treize pour les opérations qui doivent vérifier plusieurs lignes ou survivre aux changements d’appartenance : création et gestion d’un espace partagé, invitations, membres, transfert de propriété, départ, suppression, aperçu de suppression de compte et création atomique d’un ticket. La création de ticket dérive le montant de la somme des lignes et refuse les catégories ou espaces non autorisés.
 
 Cette exception n’est acceptable que tant que chaque RPC :
 
