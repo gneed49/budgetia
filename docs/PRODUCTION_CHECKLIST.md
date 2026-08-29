@@ -35,8 +35,8 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 - [x] Linter Supabase local sur `public,private` sans erreur ni avertissement ; les RPC `SECURITY DEFINER` sont réparties entre surface authentifiée contrôlée et worker `service_role`, comme documenté dans `SECURITY.md`.
 - [x] Cron Coach actif toutes les cinq minutes avec secret worker généré et chiffré dans Vault.
 - [ ] Push Expo validé sur un téléphone physique avec `EAS_PROJECT_ID` ; le jeton de sécurité push serveur reste facultatif.
-- [ ] Serveur OAuth 2.1 Supabase et enregistrement dynamique des clients activés ; tant que ses endpoints `/.well-known` répondent `404`, ChatGPT ne peut pas terminer la découverte même si les outils MCP sont opérationnels avec un Bearer token.
-- [ ] URL HTTPS du client OAuth déployée et ajoutée aux redirections Auth.
+- [x] Serveur OAuth 2.1 Supabase et enregistrement dynamique activés ; découverte officielle vérifiée en production avec une réponse `200`.
+- [x] URL HTTPS GitHub Pages enregistrée comme Site URL Auth et `/oauth/consent` configuré comme chemin d’autorisation.
 - [ ] Confirmations e-mail activées et SMTP de production testé.
 - [ ] Protection CAPTCHA et limites Auth évaluées selon l’exposition publique.
 - [ ] Sauvegardes et restauration Supabase testées selon le plan retenu.
@@ -72,7 +72,8 @@ Le script `./scripts/configure-production.sh` guide la configuration reproductib
 
 ## 4. Web, OAuth et ChatGPT
 
-- [ ] Build web Expo déployé sur une origine HTTPS avec réécriture SPA de `/oauth/consent`.
+- [x] Build web Expo déployé sur GitHub Pages ; racine, route `/budgetia/oauth/consent` et bundle JavaScript vérifiés en `200`.
+- [x] Découverte OAuth, enregistrement dynamique d’un client public et redirection PKCE `302` vers l’écran de consentement vérifiés en production.
 - [ ] Connexion, consentement, refus et révocation OAuth validés sur l’URL de production.
 - [ ] MCP ajouté dans ChatGPT et appels réels validés avec deux comptes et un budget commun.
 - [ ] Première clé OpenAI utilisateur validée depuis l’app ; volontairement non testée pendant l’implémentation à la demande du propriétaire.
