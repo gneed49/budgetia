@@ -19,6 +19,8 @@
         <li>budgets, catégories, montants, dates et notes saisis volontairement ;</li>
         <li>commerçants, lignes de tickets et pôles produit confirmés volontairement ;</li>
         <li>membres et invitations des budgets partagés ;</li>
+        <li>préférences, bilans et feedback du Coach financier ;</li>
+        <li>jeton technique de notification de l’appareil, uniquement après accord ;</li>
         <li>journaux techniques limités nécessaires à la sécurité et au diagnostic.</li>
       </ul>
 
@@ -27,6 +29,7 @@
 
       <h2>Hébergement et destinataires</h2>
       <p>Les données applicatives sont hébergées par Supabase. Les distributions Android peuvent être fournies par GitHub et Google Play. ChatGPT ne reçoit les données Budgetia qu’après connexion OAuth et appel d’un outil autorisé par l’utilisateur.</p>
+      <p>Le Coach fonctionne sans fournisseur IA distant par défaut. Si l’utilisateur ajoute volontairement sa propre clé API OpenAI, OpenAI reçoit uniquement des totaux structurés, périodes, identifiants de faits et alias de catégories ; Budgetia exclut les notes, commerçants, libellés de tickets et noms de catégories. La clé est chiffrée dans Supabase Vault et peut être supprimée depuis l’app. Les notifications facultatives transitent par Expo avec un contenu générique ne révélant aucun montant sur l’écran verrouillé.</p>
       <p>Dans l’application mobile, la reconnaissance d’un ticket est exécutée localement sur l’appareil. Budgetia n’envoie ni ne conserve la photo ou le texte OCR brut ; seules les lignes vérifiées sont synchronisées. Si une image est volontairement jointe à une conversation ChatGPT, son traitement relève aussi des paramètres et conditions de ce service.</p>
 
       <h2>Partage et conservation</h2>
@@ -35,7 +38,7 @@
       <h2>Vos droits</h2>
       <p>L’application permet d’exporter les dépenses du budget sélectionné au format CSV et de supprimer le compte. Pour une demande d’accès, de rectification ou d’opposition ne pouvant pas être réalisée dans l’application, utilisez le canal de support sans publier de données financières dans un ticket public.</p>
 
-      <p class="updated">Version V1 · mise à jour le 28 août 2026.</p>
+      <p class="updated">Version V1 · mise à jour le 29 août 2026.</p>
     </main>
   </body>
 </html>

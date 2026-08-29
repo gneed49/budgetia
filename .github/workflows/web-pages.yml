@@ -1,0 +1,82 @@
+name: Budgetia web production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/web-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: budgetia-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and deploy the consent web app
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install and validate
+        run: npm ci && npm run check
+
+      - name: Validate public client configuration
+        shell: bash
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          [[ "$EXPO_PUBLIC_SUPABASE_URL" =~ ^https://[a-z0-9]{20}\.supabase\.co$ ]]
+          [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" =~ ^sb_publishable_[A-Za-z0-9_-]{20,}$ ]]
+
+      - name: Export the Expo web app
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+          NODE_ENV: production
+        run: npx expo export --platform web --clear
+
+      - name: Add static routes for GitHub Pages
+        shell: bash
+        run: |
+          mkdir -p apps/mobile/dist/oauth/consent
+          cp apps/mobile/dist/index.html apps/mobile/dist/oauth/consent/index.html
+          cp apps/mobile/dist/index.html apps/mobile/dist/404.html
+          touch apps/mobile/dist/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: apps/mobile/dist
+
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v5

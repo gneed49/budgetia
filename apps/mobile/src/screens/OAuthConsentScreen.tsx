@@ -30,6 +30,7 @@ export function OAuthConsentScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const authorizationId = currentAuthorizationId();
+  const requestingApplication = details?.client.name.trim() || "cette application";
 
   useEffect(() => {
     let active = true;
@@ -87,9 +88,9 @@ export function OAuthConsentScreen() {
           </View>
           <Text style={styles.brandName}>Budgetia</Text>
         </View>
-        <Text style={styles.title}>Autoriser ChatGPT ?</Text>
+        <Text style={styles.title}>Autoriser {requestingApplication} ?</Text>
         <Text style={styles.copy}>
-          ChatGPT pourra ajouter une dépense et lire vos catégories, historiques et bilans Budgetia.
+          Cette application pourra ajouter une dépense et lire vos catégories, historiques et bilans Budgetia après votre accord explicite.
         </Text>
 
         {loading ? <ActivityIndicator color={colors.mintDark} /> : null}
@@ -100,6 +101,9 @@ export function OAuthConsentScreen() {
               <Text style={styles.clientLabel}>Application demandeuse</Text>
               <Text style={styles.clientName}>{details.client.name || "ChatGPT"}</Text>
               <Text style={styles.account}>{details.user.email}</Text>
+              <Text style={styles.redirect} numberOfLines={2}>
+                Retour vers : {details.redirect_uri}
+              </Text>
               <View style={styles.scopeRow}>
                 {details.scope
                   .split(" ")
@@ -178,6 +182,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   clientLabel: { color: colors.muted, fontSize: 11, fontWeight: "700" },
   clientName: { color: colors.ink, fontSize: 18, fontWeight: "900" },
   account: { color: colors.muted, fontSize: 12 },
+  redirect: { color: colors.muted, fontSize: 10, lineHeight: 14 },
   scopeRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginTop: 4 },
   scope: {
     paddingHorizontal: spacing.xs,

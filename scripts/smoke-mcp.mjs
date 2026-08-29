@@ -50,9 +50,13 @@ assert.equal(metadata.resource, mcpUrl);
 assert.deepEqual(metadata.scopes_supported, ["email"]);
 
 if (!skipOAuthDiscovery) {
-  const authorizationMetadataResponse = await fetch(
-    `${metadata.authorization_servers[0]}/.well-known/oauth-authorization-server`,
-  );
+  const authorizationServer = new URL(metadata.authorization_servers[0]);
+  const standardizedDiscoveryUrl = `${authorizationServer.origin}/.well-known/oauth-authorization-server${authorizationServer.pathname.replace(/\/+$/, "")}`;
+  const legacyDiscoveryUrl = `${authorizationServer.toString().replace(/\/+$/, "")}/.well-known/oauth-authorization-server`;
+  let authorizationMetadataResponse = await fetch(standardizedDiscoveryUrl);
+  if (authorizationMetadataResponse.status === 404) {
+    authorizationMetadataResponse = await fetch(legacyDiscoveryUrl);
+  }
   assert.equal(authorizationMetadataResponse.status, 200);
   const authorizationMetadata = await authorizationMetadataResponse.json();
   assert.equal(
@@ -155,6 +159,8 @@ assert.deepEqual(
     "delete_category_budget_limit",
     "list_expenses",
     "get_spending_summary",
+    "list_financial_coach_reports",
+    "generate_financial_coach_report",
   ],
 );
 
@@ -380,12 +386,35 @@ const sharedSummary = await legacyCall("tools/call", {
 assert.equal(sharedSummary.result.structuredContent.summary.total, 26);
 assert.equal(sharedSummary.result.structuredContent.remaining_budget, 1974);
 
+const coachReport = await legacyCall("tools/call", {
+  name: "generate_financial_coach_report",
+  arguments: { report_type: "weekly", budget_space_id: sharedBudget.id },
+});
+assert.notEqual(coachReport.result.isError, true, JSON.stringify(coachReport.result));
+assert.equal(coachReport.result.structuredContent.report.report_type, "weekly");
+assert.equal(
+  coachReport.result.structuredContent.report.generated_by,
+  "deterministic",
+  "a BYOK-free account must use the deterministic fallback",
+);
+assert.equal(
+  JSON.stringify(coachReport.result.structuredContent.report).includes("Courses communes"),
+  false,
+  "expense notes must not enter a financial coach report",
+);
+
+const coachReports = await legacyCall("tools/call", {
+  name: "list_financial_coach_reports",
+  arguments: { budget_space_id: sharedBudget.id, limit: 5 },
+});
+assert.equal(coachReports.result.structuredContent.reports.length, 1);
+
 const discovered = await modernCall("server/discover");
 assert.deepEqual(discovered.result.supportedVersions, ["2026-07-28"]);
 assert.equal(discovered.result.resultType, "complete");
 
 const modernTools = await modernCall("tools/list");
-assert.equal(modernTools.result.tools.length, 14);
+assert.equal(modernTools.result.tools.length, 16);
 assert.equal(modernTools.result.cacheScope, "public");
 
 const cleanupResponse = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
@@ -404,5 +433,5 @@ assert.equal(
 );
 
 console.log(
-  `Budgetia MCP smoke test: ${skipOAuthDiscovery ? "resource metadata (OAuth server check skipped)," : "OAuth discovery/DCR,"} auth, personal/shared targeting, receipts, category limits, fallback expense, category lifecycle, legacy, modern, idempotent write and cleanup passed.`,
+  `Budgetia MCP smoke test: ${skipOAuthDiscovery ? "resource metadata (OAuth server check skipped)," : "OAuth discovery/DCR,"} auth, personal/shared targeting, receipts, category limits, financial coach without provider key, fallback expense, category lifecycle, legacy, modern, idempotent write and cleanup passed.`,
 );

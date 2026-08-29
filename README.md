@@ -20,6 +20,10 @@ Budgetia est une application Expo / React Native pour saisir des dépenses, cré
 - plafonds mensuels par catégorie, partagés dans un budget commun ;
 - onglet Coach avec restant, dépassement, projection et comparaison au mois précédent ;
 - recommandations immédiates déterministes, calculées sans lire les notes libres ;
+- bilans privés hebdomadaires et mensuels, alertes de seuil anti-spam et historique dédié ;
+- agent IA sans fenêtre de prompt, avec faits bornés, catégories anonymisées et sortie JSON stricte ;
+- clé OpenAI facultative apportée par chaque utilisateur, validée puis chiffrée dans Supabase Vault ;
+- notifications Expo au contenu générique, activées explicitement sur un téléphone physique ;
 - vues semaine, mois et année ;
 - graphiques anneau, barres et courbe interchangeables ;
 - filtres multi-catégories sur les périodes passées ;
@@ -29,10 +33,10 @@ Budgetia est une application Expo / React Native pour saisir des dépenses, cré
 - une dépense globale par ticket, détaillée en lignes et pôles produit (alimentation, hygiène, entretien, etc.) ;
 - détail d’un ticket et répartition par pôle directement depuis l’historique ;
 - export CSV complet du budget sélectionné et suppression autonome du compte ;
-- MCP privé pour ajouter, lister et analyser les dépenses depuis ChatGPT ;
+- MCP privé à seize outils pour ajouter, lister et analyser les dépenses, tickets, plafonds et bilans depuis ChatGPT ;
 - OAuth 2.1 Supabase avec PKCE et écran de consentement Budgetia.
 
-Les plafonds et le premier Coach déterministe sont livrés. La conception des bilans, notifications et de la future reformulation IA sans fenêtre de prompt est détaillée dans [`docs/BUDGET_COACH_DESIGN.md`](docs/BUDGET_COACH_DESIGN.md). Aucun modèle ni aucune clé OpenAI ne sont activés dans cette version.
+Le Coach fonctionne toujours sans clé grâce à son moteur déterministe. Une personne peut facultativement fournir sa propre clé API OpenAI dans **Réglages** pour reformuler et prioriser les mêmes faits bornés. Cette clé ne traverse jamais le dépôt, l’APK ou les tables publiques ; son fonctionnement et ses limites sont détaillés dans [`docs/BUDGET_COACH_DESIGN.md`](docs/BUDGET_COACH_DESIGN.md).
 
 ## Architecture
 
@@ -44,14 +48,18 @@ App Expo / React Native ── Supabase Auth JWT ──┐
 ChatGPT ── OAuth 2.1 ── Edge Function MCP ─────┘               │
                                                                ├── espaces + membres
                                                                ├── plafonds + positions calculées
+                                                               ├── rapports privés par user_id + space_id
                                                                └── RLS par space_id
+
+pg_cron ── secret Vault ── Edge Function Coach ── faits bornés ──┬── moteur déterministe
+                                                                 └── OpenAI BYOK facultatif
 
 App web Expo /oauth/consent ── approuve ou refuse l’accès ChatGPT
 ```
 
 PostgreSQL est la source de vérité. Les règles RLS rendent les catégories, dépenses et réglages visibles uniquement aux membres de l’espace concerné. Une invitation en attente révèle seulement son libellé au destinataire ; elle n’ouvre aucun accès aux données avant acceptation. L’Edge Function transmet le JWT OAuth de l’utilisateur à la Data API : elle n’utilise ni `service_role` ni contournement de la RLS.
 
-Le MCP Supabase officiel reste un outil d’administration pour développer le projet. Il n’est volontairement pas exposé aux utilisateurs ni à ChatGPT ; Budgetia fournit son propre MCP métier limité à quatorze outils.
+Le MCP Supabase officiel reste un outil d’administration pour développer le projet. Il n’est volontairement pas exposé aux utilisateurs ni à ChatGPT ; Budgetia fournit son propre MCP métier limité à seize outils.
 
 Un ticket est rattaché à une seule dépense. Sa catégorie reste celle choisie dans le budget, tandis que ses lignes utilisent des pôles produit analytiques communs. Sur mobile, l’image est lue sur l’appareil avec ML Kit (Android) ou Vision (iOS), puis oubliée. Supabase reçoit uniquement le commerçant et les lignes corrigées dont la somme est vérifiée côté base.
 
@@ -82,6 +90,8 @@ Dans **Réglages → Catégories**, touchez une ligne pour ouvrir son gestionnai
 Dans **Réglages → Budgets partagés**, créez un espace commun puis saisissez l’adresse du partenaire. L’invitation est enregistrée dans Budgetia ; elle n’envoie pas encore d’e-mail externe. Lorsque la personne crée ou ouvre un compte avec cette adresse, elle voit l’invitation et peut la rejoindre.
 
 Dans **Coach**, choisissez un mois, une catégorie et un montant. Le plafond appartient au budget sélectionné : deux membres d’un budget commun voient et modifient la même valeur. Les dépenses ne sont jamais bloquées ; la jauge passe à « à surveiller » à 75 % et à « dépassé » au-delà de 100 %. Supprimer un plafond ne supprime ni la catégorie ni ses dépenses.
+
+Les cartes **Bilans intelligents** produisent un point hebdomadaire ou mensuel à la demande. Dans **Réglages → Coach intelligent privé**, activez séparément les alertes, les rythmes automatiques et les notifications, choisissez le jour, l’heure et le ton, puis masquez les types de conseils non souhaités. Sans clé OpenAI, le résultat reste entièrement déterministe. Avec une clé, celle-ci est envoyée une seule fois à l’Edge Function, validée, chiffrée dans Vault et immédiatement effacée du champ mobile. Un abonnement ChatGPT et la facturation de l’API OpenAI sont distincts.
 
 Pour le Web ou un émulateur :
 
@@ -114,36 +124,33 @@ npx supabase db push --dry-run
 npx supabase db push
 npx supabase functions deploy budgetia-mcp --no-verify-jwt
 npx supabase functions deploy delete-account
+npx supabase functions deploy budgetia-ai-coach --no-verify-jwt
+npx supabase db query --linked \
+  "select public.configure_ai_coach_cron_for_worker('https://VOTRE_REF.supabase.co');"
 ```
 
 `verify_jwt = false` est intentionnel pour le point d’entrée MCP : la fonction doit pouvoir renvoyer elle-même une réponse OAuth `401` avec `WWW-Authenticate`. Elle vérifie ensuite chaque Bearer token avec Supabase Auth avant tout accès, et les requêtes PostgreSQL restent soumises à la RLS.
 
-Avant `npx supabase config push`, remplacez dans `supabase/config.toml` :
+Le workflow **Supabase production** active le serveur OAuth 2.1, l’enregistrement dynamique et `/oauth/consent` avec la variable GitHub `BUDGETIA_WEB_URL`. Il appelle `scripts/configure-supabase-oauth.mjs`, qui modifie uniquement ces champs Auth ciblés via l’API de gestion. N’exécutez pas `supabase config push` avec les valeurs localhost de `supabase/config.toml` contre la production : cela remplacerait d’autres réglages Auth. Les confirmations e-mail et le SMTP restent à configurer séparément dans le Dashboard.
 
-- `auth.site_url` par l’origine HTTPS qui héberge le build web Expo ;
-- `auth.additional_redirect_urls` par cette même origine suivie de `/oauth/consent`.
-- `auth.email.enable_confirmations` par `true` et configurez un SMTP de production.
-
-Puis poussez la configuration :
-
-```bash
-npx supabase config push
-```
-
-Dans **Supabase Dashboard → Authentication → OAuth Server**, activez ensuite le serveur OAuth 2.1 et l’enregistrement dynamique des clients. Vérifiez les deux endpoints avant de connecter ChatGPT :
+Vérifiez ensuite l’endpoint officiel avant de connecter ChatGPT :
 
 ```text
 https://VOTRE_REF.supabase.co/.well-known/oauth-authorization-server/auth/v1
-https://VOTRE_REF.supabase.co/auth/v1/.well-known/oauth-authorization-server
 ```
 
-Au moins une forme prise en charge par la version Supabase déployée doit renvoyer un document JSON et non `404`. L’écran de consentement HTTPS configuré ci-dessus doit aussi être accessible ; l’activation du serveur seule ne suffit pas.
+Le smoke test accepte également l’ancien chemin local pour rester compatible avec la pile Supabase CLI. En production, le chemin officiel ci-dessus doit renvoyer le document JSON. L’écran de consentement HTTPS doit aussi être accessible ; l’activation du serveur seule ne suffit pas.
 
 En production, activez les confirmations e-mail, configurez un SMTP fiable et, si vous demandez le scope `openid`, migrez les JWT vers une clé asymétrique. Budgetia ne demande actuellement que le scope standard `email`, car Supabase Auth ne prend pas encore en charge les scopes OAuth métier personnalisés.
 
 ## Déploiement de l’écran OAuth
 
-Le chemin `/oauth/consent` fait partie de l’app web Expo. Un hébergeur SPA doit réécrire ce chemin vers `index.html`. `apps/mobile/vercel.json` contient déjà la règle pour Vercel.
+`.github/workflows/web-pages.yml` exporte l’app Expo et déploie automatiquement l’écran de consentement à chaque push `main`. Pour ce dépôt, les URLs sont :
+
+- `https://gneed49.github.io/budgetia/` ;
+- `https://gneed49.github.io/budgetia/oauth/consent`.
+
+Le chemin de base `/budgetia` est défini dans `apps/mobile/app.json`. Un fork renommé doit l’adapter au nom de son dépôt GitHub Pages. Les secrets Actions ne sont jamais copiés dans un fork : chaque déploiement doit fournir sa propre URL Supabase et sa propre clé publishable.
 
 Build :
 
@@ -151,7 +158,7 @@ Build :
 npm run build:web --workspace @budgetia/mobile
 ```
 
-Déployez `apps/mobile/dist`, avec les deux variables `EXPO_PUBLIC_SUPABASE_*` du projet de production.
+Pour un autre hébergeur, déployez `apps/mobile/dist` avec une réécriture SPA de `/oauth/consent` et les deux variables `EXPO_PUBLIC_SUPABASE_*` de votre propre projet.
 
 ## Android avec Expo EAS et GitHub Actions
 
@@ -254,8 +261,10 @@ Exemples :
 | `delete_category_budget_limit` | Retire uniquement un plafond mensuel après confirmation explicite |
 | `list_expenses` | Liste les dépenses d’un budget, d’une période et de catégories précises |
 | `get_spending_summary` | Renvoie total, budget restant, comparaison, catégories et série temporelle |
+| `list_financial_coach_reports` | Lit les bilans privés de l’utilisateur dans le budget ciblé |
+| `generate_financial_coach_report` | Génère un bilan borné semaine/mois, sans accepter de prompt libre |
 
-Les treize outils portant sur les données acceptent `budget_space_id`. Sans ce paramètre, ils ciblent le budget personnel. Pour un budget partagé, ChatGPT doit d’abord appeler `list_budget_spaces`, lever toute ambiguïté avec l’utilisateur puis transmettre explicitement l’identifiant. `add_expense` et `add_receipt_expense` acceptent une catégorie omise et classent alors la dépense dans la catégorie de secours du budget. Pour un ticket, ChatGPT doit montrer la proposition structurée et attendre une confirmation explicite avant l’écriture. La suppression d’un plafond exige elle aussi une confirmation et ne touche jamais aux dépenses.
+Les quinze outils portant sur les données acceptent `budget_space_id`. Sans ce paramètre, ils ciblent le budget personnel. Pour un budget partagé, ChatGPT doit d’abord appeler `list_budget_spaces`, lever toute ambiguïté avec l’utilisateur puis transmettre explicitement l’identifiant. `add_expense` et `add_receipt_expense` acceptent une catégorie omise et classent alors la dépense dans la catégorie de secours du budget. Pour un ticket, ChatGPT doit montrer la proposition structurée et attendre une confirmation explicite avant l’écriture. La suppression d’un plafond exige elle aussi une confirmation et ne touche jamais aux dépenses. Les outils Coach n’exposent ni saisie de clé ni prompt libre.
 
 Le serveur accepte le protocole MCP `2025-11-25` et la révision stateless `2026-07-28`.
 
@@ -268,8 +277,8 @@ npm run supabase:test
 npm run smoke:local
 ```
 
-- Vitest couvre les calculs de période, l’analyse déterministe des tickets, les conseils de plafond et le contrat des quatorze outils MCP.
-- pgTAP exécute 126 assertions couvrant le provisioning, l’idempotence, les agrégats, les invitations, l’adhésion, les tickets, les plafonds, leurs calculs, l’historique après suppression de catégorie, les transferts/suppressions atomiques, la catégorie de secours, les index et l’isolation personnelle/partagée par RLS.
+- Vitest couvre les calculs de période, l’analyse déterministe des tickets, la frontière anti-injection du Coach et le contrat des seize outils MCP.
+- pgTAP exécute 167 assertions couvrant aussi les rapports privés, la file planifiée, Vault, le secret Cron, les alertes anti-spam et l’isolation par utilisateur dans un budget partagé.
 - Le build web vérifie l’intégration Expo.
 
 Un build local et des tests protocole ne prouvent pas une connexion réelle depuis ChatGPT ni un lancement sur téléphone physique. Ces deux validations nécessitent le projet Supabase déployé, une URL HTTPS et une autorisation interactive.
@@ -281,6 +290,7 @@ apps/mobile/                     application Expo, auth, OCR local et écran OAu
 packages/domain/                 périodes, montants, analyse de tickets et types partagés
 supabase/migrations/             schéma PostgreSQL, fonctions et RLS
 supabase/functions/budgetia-mcp/ MCP HTTP pour ChatGPT
+supabase/functions/budgetia-ai-coach/ agent borné, BYOK, planification et push
 supabase/functions/delete-account/ suppression authentifiée du compte
 supabase/tests/database/         tests pgTAP de sécurité et données
 apps/mobile/eas.json             profils APK de test et AAB de production

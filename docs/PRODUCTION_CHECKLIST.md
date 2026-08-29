@@ -16,8 +16,8 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 - [x] Outils MCP de ticket avec confirmation d’écriture et analyses filtrées.
 - [x] Plafonds mensuels par catégorie, calcul des dépassements et onglet Coach déterministe.
 - [x] Trois outils MCP de plafond avec ciblage du budget et suppression confirmée sans effet sur les dépenses.
-- [ ] Bilans Coach hebdomadaires/mensuels persistés et notifications anti-spam.
-- [ ] Coffre BYOK et reformulation IA structurée ; aucune clé OpenAI n’est actuellement nécessaire.
+- [x] Bilans Coach hebdomadaires/mensuels persistés, alertes anti-spam et préférences privées.
+- [x] Coffre BYOK Vault, sortie IA structurée, repli déterministe et suppression autonome ; aucune clé OpenAI globale n’est nécessaire.
 - [ ] Parcours visuel complet validé sur un téléphone Android physique.
 - [ ] Parcours accessibilité vérifié avec TalkBack et taille de police agrandie.
 
@@ -25,14 +25,16 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 
 - [x] Migrations rejouables sur une base locale vierge.
 - [x] Tests pgTAP RLS et cycle de vie des espaces/comptes.
-- [x] Smoke tests HTTP des quatorze outils MCP, des tickets, des plafonds et de la suppression de compte avec un compte éphémère nettoyé.
+- [x] Smoke tests HTTP des seize outils MCP, du Coach sans clé, des tickets, des plafonds et de la suppression de compte avec un compte éphémère nettoyé.
 - [x] Audit npm relu : aucune alerte haute ou critique. Les alertes modérées actuelles viennent de `uuid@7` via l’outil de build Expo `xcode`; le correctif forcé imposerait un downgrade incompatible et n’est pas appliqué.
 - [x] Projet Supabase de production `Budgetia` créé en région `eu-west-3`.
-- [x] Neuvième migration de plafonds appliquée et listée sur le projet distant, prouvée localement par 126 tests pgTAP.
-- [x] Edge Functions `budgetia-mcp` v6 et `delete-account` déployées et actives.
+- [x] Dixième migration Coach rejouée sur une base locale vierge, prouvée par 167 tests pgTAP et appliquée au projet distant.
+- [x] Edge Functions `budgetia-mcp` v8, `delete-account` v4 et `budgetia-ai-coach` v2 déployées et actives.
 - [x] Secret Edge Function `BUDGETIA_PUBLIC_SUPABASE_URL` configuré avec l’URL publique réelle.
 - [x] URL et clé publishable configurées dans les secrets GitHub du build APK ; aucune clé privilégiée n’est injectée dans Expo.
-- [x] Advisories relus : aucun défaut RLS ou clé étrangère non indexée ; treize avertissements `SECURITY DEFINER` correspondent aux RPC authentifiées explicitement contrôlées et documentées dans `SECURITY.md`.
+- [x] Linter Supabase local sur `public,private` sans erreur ni avertissement ; les RPC `SECURITY DEFINER` sont réparties entre surface authentifiée contrôlée et worker `service_role`, comme documenté dans `SECURITY.md`.
+- [x] Cron Coach actif toutes les cinq minutes avec secret worker généré et chiffré dans Vault.
+- [ ] Push Expo validé sur un téléphone physique avec `EAS_PROJECT_ID` ; le jeton de sécurité push serveur reste facultatif.
 - [ ] Serveur OAuth 2.1 Supabase et enregistrement dynamique des clients activés ; tant que ses endpoints `/.well-known` répondent `404`, ChatGPT ne peut pas terminer la découverte même si les outils MCP sont opérationnels avec un Bearer token.
 - [ ] URL HTTPS du client OAuth déployée et ajoutée aux redirections Auth.
 - [ ] Confirmations e-mail activées et SMTP de production testé.
@@ -44,6 +46,7 @@ Le workflow `Supabase production` peut automatiser migrations et fonctions aprè
 - secret `SUPABASE_ACCESS_TOKEN` ;
 - secret `SUPABASE_DB_PASSWORD` ;
 - variable `SUPABASE_PROJECT_REF` ;
+- variable `BUDGETIA_WEB_URL` ;
 - variable `SUPABASE_PRODUCTION_ENABLED=true` seulement après une exécution manuelle contrôlée.
 
 Ces accès d’administration ne doivent jamais être placés dans Expo, l’APK, les variables `EXPO_PUBLIC_*` ou le dépôt.
@@ -72,6 +75,7 @@ Le script `./scripts/configure-production.sh` guide la configuration reproductib
 - [ ] Build web Expo déployé sur une origine HTTPS avec réécriture SPA de `/oauth/consent`.
 - [ ] Connexion, consentement, refus et révocation OAuth validés sur l’URL de production.
 - [ ] MCP ajouté dans ChatGPT et appels réels validés avec deux comptes et un budget commun.
+- [ ] Première clé OpenAI utilisateur validée depuis l’app ; volontairement non testée pendant l’implémentation à la demande du propriétaire.
 - [ ] Test de lecture, ajout avec confirmation, retry idempotent, filtre et synthèse effectué.
 - [ ] Les journaux de production ne contiennent ni Bearer token, ni note de dépense, ni donnée financière inutile.
 

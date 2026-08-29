@@ -24,6 +24,7 @@ import {
   type CategoryUsage,
 } from "../api";
 import { CategoryManagerModal } from "../components/CategoryManagerModal";
+import { AiCoachSettings } from "../components/AiCoachSettings";
 import { DataPrivacySection } from "../components/DataPrivacySection";
 import { ErrorBanner } from "../components/Feedback";
 import { SharedBudgetManager } from "../components/SharedBudgetManager";
@@ -261,6 +262,10 @@ export function SettingsScreen(props: {
           <Text style={styles.successText}>{message}</Text>
         </View>
       ) : null}
+
+      <View style={styles.section}>
+        <AiCoachSettings onFeedback={handleFeedback} />
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Apparence</Text>

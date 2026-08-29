@@ -1,12 +1,12 @@
 # Plafonds par catégorie et coach budgétaire — état V1
 
-La première fondation est livrée : plafonds mensuels partagés, positions calculées par PostgreSQL, recommandations déterministes, interface Coach et outils MCP. Le modèle IA, le coffre BYOK et les notifications planifiées ne sont pas encore activés ; les sections correspondantes restent le contrat de sécurité à respecter pour les lots suivants.
+La V1 est implémentée : plafonds mensuels partagés, faits calculés par PostgreSQL, rapports privés, alertes anti-spam, planification Cron, notifications, coffre BYOK, reformulation OpenAI facultative, interface Coach et outils MCP sans prompt libre.
 
 ## État de livraison
 
-- **Livré** : plafond par espace/catégorie/mois, sans report automatique ; RLS et audit ; dépensé/restant/dépassement ; seuils 75/100 % ; projection ; comparaison au mois précédent ; historique de catégorie supprimée ; onglet Coach ; accès MCP ; 126 tests pgTAP.
-- **Livré partiellement** : moteur de faits, limité pour l’instant aux positions de plafond, projection et tendance mensuelle.
-- **À livrer** : détection transparente des récurrences, bilans hebdomadaires/mensuels persistés, notifications anti-spam, coffre BYOK et reformulation IA structurée.
+- **Livré** : plafond par espace/catégorie/mois, sans report automatique ; RLS ; dépensé/restant/dépassement ; seuils 75/100 % ; projection ; comparaison ; rapports semaine/mois ; alertes dédupliquées ; préférences ; Vault ; agent borné ; push générique ; deux outils Coach ; 167 tests pgTAP.
+- **Repli garanti** : l’absence, l’expiration ou l’erreur d’une clé OpenAI conserve un rapport entièrement déterministe.
+- **Hors V1** : détection automatique des abonnements/récurrences et simulation de report signé entre mois.
 
 ## 1. Plafond mensuel par catégorie
 
@@ -53,8 +53,8 @@ Avant toute IA, Budgetia calcule des faits vérifiables :
 - rythme de dépense comparé au nombre de jours écoulés ;
 - variation par rapport à la semaine et au mois précédents ;
 - catégories expliquant le plus la variation totale ;
-- dépenses récurrentes détectées avec une règle transparente ;
-- marge potentielle si une catégorie revient à sa médiane récente.
+- budget mensuel et marge restante ou dépassée ;
+- identifiants de faits utilisés pour justifier chaque recommandation.
 
 Chaque fait possède un identifiant, une période, une formule, les identifiants de catégories concernés et les montants source. Le client peut ainsi afficher « Pourquoi ce conseil ? » sans demander au modèle de reconstruire le calcul.
 
@@ -67,7 +67,7 @@ Le modèle reçoit uniquement un paquet minimal :
 - faits financiers structurés et déjà calculés ;
 - catégories remplacées par des alias opaques comme `C1` et `C2` ;
 - préférences autorisées, telles que les notifications activées ou le niveau de prudence ;
-- aucune note, aucun nom de commerçant, aucun libellé libre de catégorie et aucun contenu provenant d’un MCP.
+- aucune note, aucun nom de commerçant, aucun libellé de ticket, aucun identifiant UUID, aucun nom/couleur de catégorie et aucun contenu libre provenant d’un MCP.
 
 Il n’a accès à aucun outil, aucune URL et aucune fonction d’écriture. Il produit un JSON conforme à un schéma fermé : type de conseil autorisé, importance, identifiants des faits justificatifs, action suggérée, confiance et courte explication. Le serveur rejette toute catégorie, tout montant ou tout fait absent du paquet d’entrée, puis remappe les alias vers les libellés uniquement après validation.
 
@@ -84,7 +84,7 @@ Règles V1 :
 - un bilan mensuel après clôture du mois ;
 - aucune notification si les faits ne dépassent pas un seuil utile ;
 - possibilité de désactiver le coach, les alertes de seuil ou chaque rythme séparément ;
-- actions « utile », « pas utile », « masquer ce type » et « reporter » ;
+- actions « utile », « pas utile », « masquer ce type », « masquer sept jours » et « retirer » ;
 - suppression des bilans et des données IA depuis les réglages.
 
 ## 5. Interface dédiée « Coach »
@@ -96,13 +96,13 @@ L’onglet contient quatre zones courtes :
 3. **Bilan hebdomadaire** : évolution, catégories contributrices et actions possibles.
 4. **Bilan mensuel** : résultat final, comparaison, écarts et objectifs du mois suivant.
 
-Chaque conseil affiche son origine, par exemple « basé sur 128 € dépensés sur un plafond de 100 € du 1er au 18 août ». Le détail montre la formule déterministe et permet de corriger une catégorie avant de recalculer le bilan.
+Chaque conseil affiche ses identifiants de faits justificatifs. Le serveur remappe les alias vers les noms de catégories uniquement après validation de la sortie ; ces noms ne deviennent jamais des consignes.
 
 ## 6. BYOK OpenAI sécurisé
 
-La future page Réglages permet à chaque personne d’ajouter sa propre clé API OpenAI. La clé est envoyée une seule fois par HTTPS à une Edge Function authentifiée, validée auprès du fournisseur, puis chiffrée avec une clé d’application disponible uniquement côté serveur. La base conserve le chiffré, le vecteur d’initialisation, la version de chiffrement et les quatre derniers caractères ; elle ne renvoie jamais la clé au client.
+La page Réglages permet à chaque personne d’ajouter sa propre clé API OpenAI. La clé est envoyée une seule fois par HTTPS à une Edge Function authentifiée, validée auprès du fournisseur, puis chiffrée par Supabase Vault. La table privée conserve uniquement l’identifiant du secret, le modèle, le statut et les quatre derniers caractères ; elle ne renvoie jamais la clé au client.
 
-La clé n’est placée ni dans `EXPO_PUBLIC_*`, ni dans SecureStore, ni dans l’APK, ni dans GitHub. L’utilisateur peut la remplacer ou la supprimer. Chaque traitement applique quota, limitation de débit, journal technique sans contenu financier et identifiant de sécurité pseudonymisé. Un abonnement ChatGPT ne fournit pas de crédits API OpenAI : la facturation API du détenteur de la clé reste séparée.
+La clé n’est placée ni dans `EXPO_PUBLIC_*`, ni dans SecureStore, ni dans l’APK, ni dans GitHub. L’utilisateur peut la remplacer ou la supprimer. Chaque traitement applique une limitation de débit, un journal d’erreur réduit à un code et un identifiant de sécurité pseudonymisé. Un abonnement ChatGPT ne fournit pas de crédits API OpenAI : la facturation API du détenteur de la clé reste séparée.
 
 ## 7. Ordre de livraison
 
@@ -114,26 +114,28 @@ La clé n’est placée ni dans `EXPO_PUBLIC_*`, ni dans SecureStore, ni dans l�
 - recommandations immédiates déterministes dans l’onglet Coach ;
 - lecture et gestion via le MCP.
 
-### Lot A2 — bilans et notifications — à livrer
+### Lot A2 — bilans et notifications — livré
 
 - bilan hebdomadaire/mensuel entièrement déterministe ;
 - préférences et notifications locales de seuil ;
 - délais anti-spam, historique et actions utile/masquer/report.
 
-### Lot B — coffre BYOK
+### Lot B — coffre BYOK — livré
 
 - saisie et remplacement de clé ;
-- chiffrement serveur avec rotation ;
-- quotas, suppression et journal d’audit sans secret ;
+- chiffrement Supabase Vault et suppression en cascade ;
+- limitation à une demande par quart d’heure, suppression et codes d’erreur sans secret ;
 - tests prouvant qu’aucune réponse API ne révèle le chiffré ou la clé.
 
-### Lot C — recommandations IA
+### Lot C — recommandations IA — livré sans clé de test réelle
 
 - paquet de faits minimal et alias opaques ;
 - sortie structurée et validation stricte ;
 - écran Coach, bilans planifiés et notifications ;
 - corpus d’évaluation incluant injections dans notes, catégories et réponses modèle ;
-- activation progressive, arrêt global et suivi du coût.
+- activation explicite par utilisateur, repli déterministe et compteurs de jetons privés.
+
+La frontière, le repli et les sorties invalides sont testés localement. Conformément au choix du propriétaire, aucune clé OpenAI réelle n’a été créée ou utilisée pendant la validation ; le premier appel fournisseur reste donc une vérification utilisateur facultative après déploiement.
 
 ## 8. Critères de sortie
 

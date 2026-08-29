@@ -30,6 +30,14 @@
     "plugins": [
       "expo-secure-store",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/adaptive-icon.png",
+          "color": "#169B68",
+          "defaultChannel": "budget-coach"
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Autoriser Budgetia à sélectionner une photo de ticket.",
@@ -46,6 +54,14 @@
           "backgroundColor": "#FBFCFB"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "privacy": {
+        "pushContent": "generic"
+      }
+    },
+    "experiments": {
+      "baseUrl": "/budgetia"
+    }
   }
 }

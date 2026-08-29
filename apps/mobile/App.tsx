@@ -70,7 +70,7 @@ const tabs: Array<{
 
 function isOAuthConsentPath(): boolean {
   if (Platform.OS !== "web" || typeof window === "undefined") return false;
-  return window.location.pathname.replace(/\/+$/, "") === "/oauth/consent";
+  return window.location.pathname.replace(/\/+$/, "").endsWith("/oauth/consent");
 }
 
 function LoadingScreen(props: { message?: string; error?: boolean } = {}) {
@@ -108,6 +108,26 @@ function BudgetiaWorkspace(props: {
     [props.activeSpace.id],
   );
   const overview = useOverview(api);
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    let subscription: { remove: () => void } | undefined;
+    void import("expo-notifications").then((Notifications) => {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowBanner: true,
+          shouldShowList: true,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+        }),
+      });
+      subscription = Notifications.addNotificationResponseReceivedListener(() => {
+        setTab("coach");
+        refreshAll();
+      });
+    });
+    return () => subscription?.remove();
+  }, []);
 
   function refreshAll(): void {
     setRefreshVersion((current) => current + 1);

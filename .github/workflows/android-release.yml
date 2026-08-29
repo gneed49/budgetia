@@ -72,6 +72,7 @@ jobs:
         working-directory: apps/mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
         run: eas build --platform android --profile preview --non-interactive --json > "$RUNNER_TEMP/eas-build.json"
 
       - name: Resolve and download the APK
@@ -157,6 +158,7 @@ jobs:
         working-directory: apps/mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
         run: eas build --platform android --profile production --non-interactive --json > "$RUNNER_TEMP/eas-build.json"
 
       - name: Resolve and download the AAB

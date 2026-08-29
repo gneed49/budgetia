@@ -7,6 +7,7 @@ on:
       - "supabase/migrations/**"
       - "supabase/functions/**"
       - "supabase/config.toml"
+      - "scripts/configure-supabase-oauth.mjs"
       - ".github/workflows/supabase-production.yml"
   workflow_dispatch:
 
@@ -78,3 +79,39 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
         run: npx supabase functions deploy delete-account --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy private BYOK financial coach
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: npx supabase functions deploy budgetia-ai-coach --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+
+      - name: Configure the encrypted Coach scheduler
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        shell: bash
+        run: |
+          [[ "$SUPABASE_PROJECT_REF" =~ ^[a-z0-9]{20}$ ]]
+          npx supabase db query --linked \
+            "select public.configure_ai_coach_cron_for_worker('https://${SUPABASE_PROJECT_REF}.supabase.co');"
+
+      - name: Configure optional Expo push security
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+          EXPO_PUSH_ACCESS_TOKEN: ${{ secrets.EXPO_PUSH_ACCESS_TOKEN }}
+        shell: bash
+        run: |
+          if [[ -n "$EXPO_PUSH_ACCESS_TOKEN" ]]; then
+            npx supabase secrets set EXPO_ACCESS_TOKEN="$EXPO_PUSH_ACCESS_TOKEN" --project-ref "$SUPABASE_PROJECT_REF"
+          else
+            echo "Optional Expo push access token not configured."
+          fi
+
+      - name: Configure the OAuth server and consent URL
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+          BUDGETIA_WEB_URL: ${{ vars.BUDGETIA_WEB_URL }}
+        run: node scripts/configure-supabase-oauth.mjs

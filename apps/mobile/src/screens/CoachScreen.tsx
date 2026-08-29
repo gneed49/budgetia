@@ -21,6 +21,16 @@ import {
 } from "@budgetia/domain";
 
 import { BudgetApi } from "../api";
+import {
+  generateCoachReport,
+  listCoachNotifications,
+  listCoachReports,
+  updateCoachNotification,
+  updateCoachReport,
+  type CoachNotification,
+  type CoachReport,
+  type CoachReportType,
+} from "../coach";
 import { ErrorBanner, LoadingBlock } from "../components/Feedback";
 import { formatMoney } from "../format";
 import { useCategoryBudgets } from "../hooks";
@@ -56,6 +66,11 @@ export function CoachScreen(props: {
   );
   const [amount, setAmount] = useState("");
   const [saving, setSaving] = useState(false);
+  const [reports, setReports] = useState<CoachReport[]>([]);
+  const [notifications, setNotifications] = useState<CoachNotification[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(true);
+  const [generating, setGenerating] = useState<CoachReportType | null>(null);
+  const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const budgets = useCategoryBudgets(
@@ -89,6 +104,83 @@ export function CoachScreen(props: {
     setFeedback(null);
     setActionError(null);
   }, [referenceDate]);
+
+  useEffect(() => {
+    let active = true;
+    setReportsLoading(true);
+    void Promise.all([
+      listCoachReports(props.api.spaceId),
+      listCoachNotifications(props.api.spaceId),
+    ])
+      .then(([nextReports, nextNotifications]) => {
+        if (active) {
+          setReports(nextReports);
+          setNotifications(nextNotifications.filter((item) => item.kind === "threshold"));
+        }
+      })
+      .catch((reason: unknown) => {
+        if (active) {
+          setActionError(
+            reason instanceof Error ? reason.message : "Bilans indisponibles.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setReportsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [props.api, props.refreshVersion]);
+
+  async function generateReport(reportType: CoachReportType): Promise<void> {
+    setGenerating(reportType);
+    setActionError(null);
+    setFeedback(null);
+    try {
+      const report = await generateCoachReport(props.api.spaceId, reportType);
+      setReports((current) => [report, ...current.filter((item) => item.id !== report.id)]);
+      setExpandedReportId(report.id);
+      setFeedback(
+        report.generatedBy === "openai"
+          ? "Analyse sécurisée générée avec votre clé OpenAI."
+          : "Analyse vérifiable générée sans envoyer de données à un fournisseur IA.",
+      );
+    } catch (reason) {
+      setActionError(reason instanceof Error ? reason.message : "Analyse impossible.");
+    } finally {
+      setGenerating(null);
+    }
+  }
+
+  async function reactToReport(
+    reportId: string,
+    values: Parameters<typeof updateCoachReport>[1],
+  ): Promise<void> {
+    try {
+      await updateCoachReport(reportId, values);
+      if (values.dismissed || values.snoozeDays) {
+        setReports((current) => current.filter((report) => report.id !== reportId));
+      } else if (values.helpful !== undefined) {
+        setReports((current) =>
+          current.map((report) =>
+            report.id === reportId ? { ...report, helpful: values.helpful ?? null } : report,
+          ),
+        );
+      }
+    } catch (reason) {
+      setActionError(reason instanceof Error ? reason.message : "Action impossible.");
+    }
+  }
+
+  async function dismissNotification(notificationId: string): Promise<void> {
+    try {
+      await updateCoachNotification(notificationId, { read: true, dismissed: true });
+      setNotifications((current) => current.filter((item) => item.id !== notificationId));
+    } catch (reason) {
+      setActionError(reason instanceof Error ? reason.message : "Action impossible.");
+    }
+  }
 
   function edit(position: CategoryBudgetPosition): void {
     if (!position.categoryId || !position.categoryActive) return;
@@ -211,6 +303,33 @@ export function CoachScreen(props: {
         </View>
       ) : null}
 
+      {notifications.length ? (
+        <View style={styles.notificationList}>
+          {notifications.slice(0, 4).map((notification) => (
+            <View key={notification.id} style={styles.notificationCard}>
+              <View style={styles.notificationIcon}>
+                <Ionicons
+                  name={notification.severity === "alert" ? "alert-circle" : "eye"}
+                  size={20}
+                  color={notification.severity === "alert" ? colors.coral : colors.amber}
+                />
+              </View>
+              <View style={styles.notificationCopy}>
+                <Text style={styles.notificationTitle}>{notification.title}</Text>
+                <Text style={styles.notificationBody}>{notification.body}</Text>
+              </View>
+              <Pressable
+                accessibilityLabel="Masquer cette alerte"
+                onPress={() => void dismissNotification(notification.id)}
+                hitSlop={8}
+              >
+                <Ionicons name="close" size={19} color={colors.muted} />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
       <View style={styles.summaryCard}>
         <View>
           <Text style={styles.summaryLabel}>Catégories plafonnées</Text>
@@ -223,6 +342,136 @@ export function CoachScreen(props: {
             {formatMoney(totalSpent)} / {formatMoney(totalLimit)}
           </Text>
         </View>
+      </View>
+
+      <View style={styles.aiSection}>
+        <View style={styles.sectionHeading}>
+          <View>
+            <Text style={styles.sectionTitle}>Bilans intelligents</Text>
+            <Text style={styles.aiHint}>Hebdomadaires, mensuels ou à la demande</Text>
+          </View>
+          <View style={styles.secureBadge}>
+            <Ionicons name="shield-checkmark" size={14} color={colors.mintDark} />
+            <Text style={styles.secureBadgeText}>Données filtrées</Text>
+          </View>
+        </View>
+        <View style={styles.generateRow}>
+          {(["weekly", "monthly"] as const).map((reportType) => (
+            <Pressable
+              key={reportType}
+              accessibilityRole="button"
+              disabled={generating !== null}
+              onPress={() => void generateReport(reportType)}
+              style={({ pressed }) => [
+                styles.generateButton,
+                (pressed || generating !== null) && styles.disabled,
+              ]}
+            >
+              <Ionicons
+                name={reportType === "weekly" ? "calendar-outline" : "calendar-number-outline"}
+                size={17}
+                color={colors.onPrimary}
+              />
+              <Text style={styles.generateButtonText}>
+                {generating === reportType
+                  ? "Analyse…"
+                  : reportType === "weekly"
+                    ? "Cette semaine"
+                    : "Ce mois"}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        {reportsLoading ? (
+          <LoadingBlock label="Chargement des bilans…" />
+        ) : reports.length ? (
+          <View style={styles.reportList}>
+            {reports.slice(0, 8).map((report) => {
+              const expanded = expandedReportId === report.id;
+              const aliasToCategory = new Map(
+                report.facts.categories.map((category) => [category.alias, category]),
+              );
+              return (
+                <View key={report.id} style={styles.reportCard}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded }}
+                    onPress={() => setExpandedReportId(expanded ? null : report.id)}
+                    style={styles.reportHeader}
+                  >
+                    <View style={styles.reportIcon}>
+                      <Ionicons
+                        name={report.generatedBy === "openai" ? "sparkles" : "calculator-outline"}
+                        size={18}
+                        color={colors.mintDark}
+                      />
+                    </View>
+                    <View style={styles.reportCopy}>
+                      <Text style={styles.reportTitle}>
+                        {report.reportType === "weekly"
+                          ? "Bilan hebdomadaire"
+                          : report.reportType === "monthly"
+                            ? "Bilan mensuel"
+                            : "Analyse ponctuelle"}
+                      </Text>
+                      <Text style={styles.reportMeta}>
+                        {report.periodStart} → {report.periodEnd} · {report.generatedBy === "openai" ? "IA privée" : "calcul vérifiable"}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name={expanded ? "chevron-up" : "chevron-down"}
+                      size={18}
+                      color={colors.muted}
+                    />
+                  </Pressable>
+                  <Text style={styles.reportSummary}>{report.advice.summary}</Text>
+                  {expanded ? (
+                    <View style={styles.reportDetails}>
+                      {report.advice.recommendations.map((recommendation, index) => {
+                        const categories = recommendation.categoryAliases
+                          .map((alias) => aliasToCategory.get(alias)?.categoryName)
+                          .filter(Boolean)
+                          .join(", ");
+                        return (
+                          <View key={`${report.id}-${index}`} style={styles.recommendationCard}>
+                            <View style={styles.recommendationPriority}>
+                              <Text style={styles.recommendationPriorityText}>{recommendation.priority}</Text>
+                            </View>
+                            <View style={styles.recommendationCopy}>
+                              {categories ? <Text style={styles.recommendationCategory}>{categories}</Text> : null}
+                              <Text style={styles.recommendationAction}>{recommendation.action}</Text>
+                              <Text style={styles.recommendationWhy}>{recommendation.explanation}</Text>
+                              <Text style={styles.factProof}>Preuves : {recommendation.factIds.join(" · ")}</Text>
+                            </View>
+                          </View>
+                        );
+                      })}
+                      <View style={styles.reportActions}>
+                        <Pressable onPress={() => void reactToReport(report.id, { helpful: true })}>
+                          <Ionicons name={report.helpful === true ? "thumbs-up" : "thumbs-up-outline"} size={19} color={colors.mintDark} />
+                        </Pressable>
+                        <Pressable onPress={() => void reactToReport(report.id, { helpful: false })}>
+                          <Ionicons name={report.helpful === false ? "thumbs-down" : "thumbs-down-outline"} size={19} color={colors.muted} />
+                        </Pressable>
+                        <Pressable onPress={() => void reactToReport(report.id, { snoozeDays: 7 })}>
+                          <Text style={styles.reportActionText}>Masquer 7 j</Text>
+                        </Pressable>
+                        <Pressable onPress={() => void reactToReport(report.id, { dismissed: true })}>
+                          <Text style={[styles.reportActionText, { color: colors.coral }]}>Retirer</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.emptyReport}>
+            <Text style={styles.emptyTitle}>Aucun bilan enregistré</Text>
+            <Text style={styles.emptyText}>Lancez un premier bilan ou activez les analyses automatiques dans Réglages.</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.section}>
@@ -425,8 +674,8 @@ export function CoachScreen(props: {
       <View style={styles.securityNote}>
         <Ionicons name="lock-closed" size={17} color={colors.muted} />
         <Text style={styles.securityText}>
-          Cette version du coach utilise uniquement des totaux structurés. Une future IA
-          recevra des catégories anonymisées, jamais vos notes ou libellés de tickets.
+          Le Coach transmet uniquement des montants structurés et des alias de catégories.
+          Vos notes, commerçants et lignes de tickets ne quittent jamais Budgetia.
         </Text>
       </View>
     </ScrollView>
@@ -481,6 +730,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.mintSoft,
   },
   successText: { flex: 1, color: colors.ink, fontSize: 13, fontWeight: "600" },
+  notificationList: { gap: spacing.xs },
+  notificationCard: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm, padding: spacing.sm, borderWidth: 1, borderColor: colors.border, borderRadius: radii.md, backgroundColor: colors.surface },
+  notificationIcon: { width: 34, height: 34, alignItems: "center", justifyContent: "center", borderRadius: radii.sm, backgroundColor: colors.dangerSoft },
+  notificationCopy: { flex: 1, gap: 2 },
+  notificationTitle: { color: colors.ink, fontSize: 12, fontWeight: "900" },
+  notificationBody: { color: colors.muted, fontSize: 10, lineHeight: 15 },
   summaryCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -493,6 +748,33 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   summaryDivider: { width: 1, height: 38, marginHorizontal: spacing.lg, backgroundColor: colors.surface, opacity: 0.25 },
   summaryMoney: { flex: 1 },
   summaryAmount: { marginTop: 4, color: colors.surface, fontSize: 17, fontWeight: "900" },
+  aiSection: { gap: spacing.sm },
+  aiHint: { marginTop: 3, color: colors.muted, fontSize: 11 },
+  secureBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 5, borderRadius: radii.round, backgroundColor: colors.mintSoft },
+  secureBadgeText: { color: colors.mintDark, fontSize: 10, fontWeight: "800" },
+  generateRow: { flexDirection: "row", gap: spacing.xs },
+  generateButton: { flex: 1, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: radii.sm, backgroundColor: colors.mint },
+  generateButtonText: { color: colors.onPrimary, fontSize: 12, fontWeight: "900" },
+  reportList: { gap: spacing.sm },
+  reportCard: { gap: spacing.xs, padding: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radii.lg, backgroundColor: colors.surface },
+  reportHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  reportIcon: { width: 36, height: 36, alignItems: "center", justifyContent: "center", borderRadius: radii.sm, backgroundColor: colors.mintSoft },
+  reportCopy: { flex: 1 },
+  reportTitle: { color: colors.ink, fontSize: 14, fontWeight: "900" },
+  reportMeta: { marginTop: 2, color: colors.muted, fontSize: 9, lineHeight: 13 },
+  reportSummary: { color: colors.ink, fontSize: 12, lineHeight: 18, fontWeight: "600" },
+  reportDetails: { gap: spacing.sm, paddingTop: spacing.xs, borderTopWidth: 1, borderTopColor: colors.border },
+  recommendationCard: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm, padding: spacing.sm, borderRadius: radii.md, backgroundColor: colors.surfaceRaised },
+  recommendationPriority: { width: 24, height: 24, alignItems: "center", justifyContent: "center", borderRadius: radii.round, backgroundColor: colors.mintSoft },
+  recommendationPriorityText: { color: colors.mintDark, fontSize: 11, fontWeight: "900" },
+  recommendationCopy: { flex: 1, gap: 3 },
+  recommendationCategory: { color: colors.mintDark, fontSize: 10, fontWeight: "900", textTransform: "uppercase" },
+  recommendationAction: { color: colors.ink, fontSize: 12, lineHeight: 17, fontWeight: "800" },
+  recommendationWhy: { color: colors.muted, fontSize: 10, lineHeight: 15 },
+  factProof: { color: colors.muted, fontSize: 9, fontWeight: "700" },
+  reportActions: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: spacing.md },
+  reportActionText: { color: colors.muted, fontSize: 10, fontWeight: "800" },
+  emptyReport: { alignItems: "center", gap: 4, padding: spacing.lg, borderWidth: 1, borderStyle: "dashed", borderColor: colors.border, borderRadius: radii.lg, backgroundColor: colors.surface },
   section: { gap: spacing.sm },
   sectionHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: "900" },

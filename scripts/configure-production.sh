@@ -236,6 +236,13 @@ say "Administrative credentials are hidden while typed and sent directly to GitH
 ask SUPABASE_PROJECT_REF "Supabase project ref (the subdomain before .supabase.co):"
 require_value "$SUPABASE_PROJECT_REF" "Supabase project ref"
 set_var SUPABASE_PROJECT_REF "$SUPABASE_PROJECT_REF"
+ask BUDGETIA_WEB_URL "Production web URL without a trailing slash (for example https://account.github.io/budgetia):"
+require_value "$BUDGETIA_WEB_URL" "Production web URL"
+if [[ ! "$BUDGETIA_WEB_URL" =~ ^https://[^[:space:]]+$ ]]; then
+  warn "The production web URL must use HTTPS."
+  exit 1
+fi
+set_var BUDGETIA_WEB_URL "${BUDGETIA_WEB_URL%/}"
 set_var SUPABASE_PRODUCTION_ENABLED "false"
 if confirm "Configure privileged Supabase CI credentials now?"; then
   open_url "https://supabase.com/dashboard/account/tokens"
@@ -260,9 +267,22 @@ if confirm "Configure an already initialized EAS project now?"; then
   ask_secret EXPO_TOKEN "Expo access token:"
   require_value "$EXPO_TOKEN" "Expo access token"
   set_var EAS_PROJECT_ID "$EAS_PROJECT_ID"
+  ENV_FILE=".env"
+  write_env EXPO_PUBLIC_EAS_PROJECT_ID "$EAS_PROJECT_ID"
+  ENV_FILE="apps/mobile/.env"
+  write_env EXPO_PUBLIC_EAS_PROJECT_ID "$EAS_PROJECT_ID"
   set_var EAS_PRODUCTION_ENABLED "false"
   set_secret EXPO_TOKEN "$EXPO_TOKEN"
   unset EXPO_TOKEN
+  if confirm "Enable Expo push access security now?"; then
+    step "Create a dedicated Expo access token for push delivery. Do not reuse an OpenAI or Supabase key."
+    ask_secret EXPO_PUSH_ACCESS_TOKEN "Expo push access token:"
+    require_value "$EXPO_PUSH_ACCESS_TOKEN" "Expo push access token"
+    set_secret EXPO_PUSH_ACCESS_TOKEN "$EXPO_PUSH_ACCESS_TOKEN"
+    unset EXPO_PUSH_ACCESS_TOKEN
+  else
+    note "Push delivery remains functional without enhanced Expo access-token security."
+  fi
   note "Keep EAS_PRODUCTION_ENABLED=false until an interactive preview build succeeds."
 else
   SKIPPED+=("EAS project, EXPO_TOKEN and first interactive preview build")
@@ -270,8 +290,8 @@ fi
 
 stage "Manual production gates"
 say "Secrets are configured, but production remains deliberately disabled until these external checks pass."
-step "Deploy the Expo web build on HTTPS and configure /oauth/consent as an SPA route."
-step "Update Supabase Auth site URL, redirect URL, email confirmations and production SMTP."
+step "Enable GitHub Pages with GitHub Actions; web-pages.yml deploys /oauth/consent automatically."
+step "The Supabase production workflow enables OAuth with BUDGETIA_WEB_URL; configure email confirmations and production SMTP separately."
 step "Run the Supabase production workflow manually, inspect it, then set SUPABASE_PRODUCTION_ENABLED=true."
 step "Install the exact GitHub APK on a physical Android device and test two accounts plus a shared budget."
 step "Run a silent tracked-file and Git-history secret audit before tagging a release."

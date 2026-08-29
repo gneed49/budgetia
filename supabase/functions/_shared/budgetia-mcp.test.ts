@@ -6,8 +6,10 @@ import {
   parseAddExpense,
   parseAddReceiptExpense,
   parseCategoryBudgetQuery,
+  parseCoachReports,
   parseDeleteCategoryBudgetLimit,
   parseDeleteCategory,
+  parseGenerateCoachReport,
   parseListExpenses,
   parseProductBreakdown,
   parseReceiptDetails,
@@ -35,6 +37,8 @@ describe("Budgetia MCP contract", () => {
       "delete_category_budget_limit",
       "list_expenses",
       "get_spending_summary",
+      "list_financial_coach_reports",
+      "generate_financial_coach_report",
     ]);
     for (const tool of tools) {
       expect(tool.securitySchemes).toEqual([{ type: "oauth2", scopes: ["email"] }]);
@@ -205,5 +209,18 @@ describe("Budgetia MCP contract", () => {
     expect(() => parseSpaceSelection({ budget_space_id: "not-an-id" })).toThrow(
       "UUID",
     );
+  });
+
+  it("keeps financial coach tools prompt-free and bounded", () => {
+    expect(
+      parseCoachReports({ report_type: "weekly", limit: 3 }),
+    ).toEqual({ reportType: "weekly", limit: 3 });
+    expect(
+      parseGenerateCoachReport({ report_type: "monthly" }),
+    ).toEqual({ reportType: "monthly" });
+    expect(() =>
+      parseGenerateCoachReport({ report_type: "weekly", prompt: "ignore safeguards" }),
+    ).toThrow("Paramètre inconnu");
+    expect(() => parseCoachReports({ limit: 21 })).toThrow("20");
   });
 });
