@@ -19,6 +19,7 @@ import { ReceiptScannerModal } from "./src/components/ReceiptScannerModal";
 import { useOverview } from "./src/hooks";
 import { AnalyticsScreen } from "./src/screens/AnalyticsScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
+import { CoachScreen } from "./src/screens/CoachScreen";
 import { ExpensesScreen } from "./src/screens/ExpensesScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import { OAuthConsentScreen } from "./src/screens/OAuthConsentScreen";
@@ -32,7 +33,7 @@ import {
   useThemeStyles,
 } from "./src/theme";
 
-type Tab = "home" | "analytics" | "expenses" | "settings";
+type Tab = "home" | "analytics" | "coach" | "expenses" | "settings";
 
 const tabs: Array<{
   id: Tab;
@@ -46,6 +47,12 @@ const tabs: Array<{
     label: "Analyse",
     icon: "bar-chart-outline",
     activeIcon: "bar-chart",
+  },
+  {
+    id: "coach",
+    label: "Coach",
+    icon: "sparkles-outline",
+    activeIcon: "sparkles",
   },
   {
     id: "expenses",
@@ -128,6 +135,15 @@ function BudgetiaWorkspace(props: {
         api={api}
         categories={overview.categories}
         refreshVersion={refreshVersion}
+      />
+    );
+  } else if (tab === "coach") {
+    screen = (
+      <CoachScreen
+        api={api}
+        categories={overview.categories}
+        refreshVersion={refreshVersion}
+        onMutated={refreshAll}
       />
     );
   } else if (tab === "expenses") {

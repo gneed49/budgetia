@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(104);
+select plan(126);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -26,6 +26,29 @@ select has_table('public', 'expenses', 'expenses table exists');
 select has_table('public', 'budget_settings', 'budget settings table exists');
 select has_table('public', 'receipts', 'receipts table exists');
 select has_table('public', 'receipt_items', 'receipt items table exists');
+select has_table(
+  'public', 'category_budget_limits',
+  'category budget limits table exists'
+);
+select ok(
+  has_table_privilege('authenticated', 'public.category_budget_limits', 'SELECT')
+  and has_table_privilege('authenticated', 'public.category_budget_limits', 'INSERT')
+  and has_table_privilege('authenticated', 'public.category_budget_limits', 'DELETE')
+  and not has_table_privilege('authenticated', 'public.category_budget_limits', 'UPDATE'),
+  'members can read, create and delete limits without broad update privileges'
+);
+select ok(
+  has_column_privilege(
+    'authenticated', 'public.category_budget_limits', 'limit_cents', 'UPDATE'
+  )
+  and not has_column_privilege(
+    'authenticated', 'public.category_budget_limits', 'space_id', 'UPDATE'
+  )
+  and not has_column_privilege(
+    'authenticated', 'public.category_budget_limits', 'created_by', 'UPDATE'
+  ),
+  'only a category limit amount can be updated directly'
+);
 select ok(
   has_table_privilege('authenticated', 'public.receipts', 'SELECT')
   and not has_table_privilege('authenticated', 'public.receipts', 'INSERT')
@@ -222,6 +245,138 @@ select throws_ok(
   'unknown product groups are rejected before financial data is written'
 );
 
+select lives_ok(
+  $$select public.set_category_budget_limit(
+    current_setting('test.alice_space_id')::uuid,
+    (select id from public.categories where name = 'Alimentation'),
+    '2026-08-26',
+    2000
+  )$$,
+  'Alice can set a monthly category limit'
+);
+select is(
+  (select month::text from public.category_budget_limits),
+  '2026-08-01',
+  'a category limit is normalized to the first day of its month'
+);
+select is(
+  (select limit_cents from public.category_budget_limits),
+  2000::bigint,
+  'the category limit preserves exact cents'
+);
+select is(
+  (select created_by from public.category_budget_limits),
+  '11111111-1111-4111-8111-111111111111'::uuid,
+  'the category limit creator is captured by the database'
+);
+select is(
+  (
+    select spent_cents
+    from public.get_category_budget_positions(
+      current_setting('test.alice_space_id')::uuid,
+      '2026-08-26'
+    )
+  ),
+  2150::bigint,
+  'category positions aggregate normal and receipt expenses'
+);
+select is(
+  (
+    select remaining_cents
+    from public.get_category_budget_positions(
+      current_setting('test.alice_space_id')::uuid,
+      '2026-08-26'
+    )
+  ),
+  (-150)::bigint,
+  'category positions expose an exact overrun'
+);
+select is(
+  (
+    select status
+    from public.get_category_budget_positions(
+      current_setting('test.alice_space_id')::uuid,
+      '2026-08-26'
+    )
+  ),
+  'exceeded',
+  'spending above a limit is marked exceeded'
+);
+select is(
+  (
+    select previous_spent_cents
+    from public.get_category_budget_positions(
+      current_setting('test.alice_space_id')::uuid,
+      '2026-08-26'
+    )
+  ),
+  0::bigint,
+  'the previous month comparison is deterministic'
+);
+select is(
+  (
+    select percentage
+    from public.get_category_budget_positions(
+      current_setting('test.alice_space_id')::uuid,
+      '2026-08-26'
+    )
+  ),
+  107.5::numeric,
+  'the limit percentage is rounded to one decimal'
+);
+select lives_ok(
+  $$select public.set_category_budget_limit(
+    current_setting('test.alice_space_id')::uuid,
+    (select id from public.categories where name = 'Alimentation'),
+    '2026-08-01',
+    3000
+  )$$,
+  'setting the same category and month updates the limit'
+);
+select is(
+  (select limit_cents from public.category_budget_limits),
+  3000::bigint,
+  'the upsert does not duplicate a category limit'
+);
+select is(
+  (
+    select status
+    from public.get_category_budget_positions(
+      current_setting('test.alice_space_id')::uuid,
+      '2026-08-26'
+    )
+  ),
+  'healthy',
+  'spending below seventy-five percent is healthy'
+);
+select throws_ok(
+  format(
+    $$insert into public.category_budget_limits (
+      space_id, category_id, category_name, category_color, category_icon,
+      month, limit_cents
+    ) values ('%s', '%s', 'Invalide', '#000000', 'wallet-outline',
+      '2026-08-01', 1000)$$,
+    current_setting('test.alice_space_id'),
+    current_setting('test.bob_fallback_id')
+  ),
+  '22023',
+  'category not found in this budget',
+  'a member cannot attach a limit to another budget category'
+);
+select lives_ok(
+  $$select public.delete_category_budget_limit(
+    current_setting('test.alice_space_id')::uuid,
+    (select id from public.categories where name = 'Alimentation'),
+    '2026-08-26'
+  )$$,
+  'Alice can remove one category limit'
+);
+select is(
+  (select count(*)::integer from public.category_budget_limits),
+  0,
+  'removing a limit does not affect the category or its expenses'
+);
+
 select is_empty(
   $$delete from public.categories where is_fallback returning id$$,
   'RLS prevents direct deletion of the fallback category'
@@ -286,6 +441,25 @@ select is(
 );
 
 select lives_ok(
+  $$select public.set_category_budget_limit(
+    current_setting('test.alice_space_id')::uuid,
+    (select id from public.categories where name = 'À transférer'),
+    date_trunc('month', current_date)::date,
+    5000
+  )$$,
+  'a category can have a limit in the current month before deletion'
+);
+select lives_ok(
+  $$select public.set_category_budget_limit(
+    current_setting('test.alice_space_id')::uuid,
+    (select id from public.categories where name = 'À transférer'),
+    (date_trunc('month', current_date) + interval '1 month')::date,
+    5000
+  )$$,
+  'a category can have a future limit before deletion'
+);
+
+select lives_ok(
   $$select public.delete_budget_category(
     (select id from public.categories where name = 'À transférer'),
     'transfer',
@@ -302,6 +476,24 @@ select is(
   (select category_id from public.expenses where request_id = 'category-delete-transfer'),
   (select id from public.categories where is_fallback),
   'delete with transfer preserves and reclassifies the expense'
+);
+select is(
+  (
+    select category_name || ':' || coalesce(category_id::text, 'orphan')
+    from public.category_budget_limits
+    where month = date_trunc('month', current_date)::date
+  ),
+  'À transférer:orphan',
+  'category deletion keeps a current historical limit snapshot'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.category_budget_limits
+    where month > date_trunc('month', current_date)::date
+  ),
+  0,
+  'category deletion removes future limits that can no longer be used'
 );
 
 select lives_ok(

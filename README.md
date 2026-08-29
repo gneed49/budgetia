@@ -17,6 +17,9 @@ Budgetia est une application Expo / React Native pour saisir des dépenses, cré
 - suppression d’une catégorie avec transfert ou suppression explicite de ses dépenses ;
 - catégorie permanente « Non classée », aussi utilisable comme « Autre » ;
 - budget mensuel, reste disponible et dépenses récentes ;
+- plafonds mensuels par catégorie, partagés dans un budget commun ;
+- onglet Coach avec restant, dépassement, projection et comparaison au mois précédent ;
+- recommandations immédiates déterministes, calculées sans lire les notes libres ;
 - vues semaine, mois et année ;
 - graphiques anneau, barres et courbe interchangeables ;
 - filtres multi-catégories sur les périodes passées ;
@@ -29,7 +32,7 @@ Budgetia est une application Expo / React Native pour saisir des dépenses, cré
 - MCP privé pour ajouter, lister et analyser les dépenses depuis ChatGPT ;
 - OAuth 2.1 Supabase avec PKCE et écran de consentement Budgetia.
 
-La conception de la prochaine évolution — plafonds mensuels par catégorie et coach budgétaire sans fenêtre de prompt — est détaillée dans [`docs/BUDGET_COACH_DESIGN.md`](docs/BUDGET_COACH_DESIGN.md). L’IA n’est pas encore activée dans la V1 actuelle.
+Les plafonds et le premier Coach déterministe sont livrés. La conception des bilans, notifications et de la future reformulation IA sans fenêtre de prompt est détaillée dans [`docs/BUDGET_COACH_DESIGN.md`](docs/BUDGET_COACH_DESIGN.md). Aucun modèle ni aucune clé OpenAI ne sont activés dans cette version.
 
 ## Architecture
 
@@ -40,6 +43,7 @@ App Expo / React Native ── Supabase Auth JWT ──┐
                                                ├── Data API ── PostgreSQL
 ChatGPT ── OAuth 2.1 ── Edge Function MCP ─────┘               │
                                                                ├── espaces + membres
+                                                               ├── plafonds + positions calculées
                                                                └── RLS par space_id
 
 App web Expo /oauth/consent ── approuve ou refuse l’accès ChatGPT
@@ -47,7 +51,7 @@ App web Expo /oauth/consent ── approuve ou refuse l’accès ChatGPT
 
 PostgreSQL est la source de vérité. Les règles RLS rendent les catégories, dépenses et réglages visibles uniquement aux membres de l’espace concerné. Une invitation en attente révèle seulement son libellé au destinataire ; elle n’ouvre aucun accès aux données avant acceptation. L’Edge Function transmet le JWT OAuth de l’utilisateur à la Data API : elle n’utilise ni `service_role` ni contournement de la RLS.
 
-Le MCP Supabase officiel reste un outil d’administration pour développer le projet. Il n’est volontairement pas exposé aux utilisateurs ni à ChatGPT ; Budgetia fournit son propre MCP métier limité à onze outils.
+Le MCP Supabase officiel reste un outil d’administration pour développer le projet. Il n’est volontairement pas exposé aux utilisateurs ni à ChatGPT ; Budgetia fournit son propre MCP métier limité à quatorze outils.
 
 Un ticket est rattaché à une seule dépense. Sa catégorie reste celle choisie dans le budget, tandis que ses lignes utilisent des pôles produit analytiques communs. Sur mobile, l’image est lue sur l’appareil avec ML Kit (Android) ou Vision (iOS), puis oubliée. Supabase reçoit uniquement le commerçant et les lignes corrigées dont la somme est vérifiée côté base.
 
@@ -76,6 +80,8 @@ L’app web est disponible sur `http://localhost:8081`. Créez un compte : le d�
 Dans **Réglages → Catégories**, touchez une ligne pour ouvrir son gestionnaire. Une modification peut conserver les dépenses dans la catégorie ou toutes les transférer. Une suppression demande soit une catégorie de destination, soit une confirmation explicite de suppression des dépenses. « Non classée » peut être renommée et recolorée, mais jamais supprimée.
 
 Dans **Réglages → Budgets partagés**, créez un espace commun puis saisissez l’adresse du partenaire. L’invitation est enregistrée dans Budgetia ; elle n’envoie pas encore d’e-mail externe. Lorsque la personne crée ou ouvre un compte avec cette adresse, elle voit l’invitation et peut la rejoindre.
+
+Dans **Coach**, choisissez un mois, une catégorie et un montant. Le plafond appartient au budget sélectionné : deux membres d’un budget commun voient et modifient la même valeur. Les dépenses ne sont jamais bloquées ; la jauge passe à « à surveiller » à 75 % et à « dépassé » au-delà de 100 %. Supprimer un plafond ne supprime ni la catégorie ni ses dépenses.
 
 Pour le Web ou un émulateur :
 
@@ -226,6 +232,9 @@ Exemples :
 - « Détaille janvier uniquement pour Logement et Abonnements. »
 - « Lis ce ticket, montre-moi les lignes et leurs pôles, puis attends ma confirmation avant de l’ajouter. »
 - « Combien ai-je dépensé en hygiène et entretien ce mois-ci d’après mes tickets ? »
+- « Mets un plafond de 350 € pour Alimentation ce mois-ci. »
+- « Quels plafonds risquent d’être dépassés dans le budget du couple ? »
+- « Supprime le plafond Transport de septembre, sans toucher aux dépenses. »
 
 ### Outils MCP
 
@@ -240,10 +249,13 @@ Exemples :
 | `add_receipt_expense` | Ajoute, après confirmation explicite, une dépense et les lignes validées d’un ticket |
 | `get_receipt_details` | Renvoie le commerçant et les lignes d’un ticket à partir de l’identifiant de dépense |
 | `get_product_breakdown` | Analyse les tickets par pôle produit, période et catégories filtrées |
+| `get_category_budget_positions` | Calcule plafonds, dépensé, restant, dépassement, projection et comparaison mensuelle |
+| `set_category_budget_limit` | Crée ou modifie le plafond mensuel d’une catégorie après demande explicite |
+| `delete_category_budget_limit` | Retire uniquement un plafond mensuel après confirmation explicite |
 | `list_expenses` | Liste les dépenses d’un budget, d’une période et de catégories précises |
 | `get_spending_summary` | Renvoie total, budget restant, comparaison, catégories et série temporelle |
 
-Les dix outils portant sur les données acceptent `budget_space_id`. Sans ce paramètre, ils ciblent le budget personnel. Pour un budget partagé, ChatGPT doit d’abord appeler `list_budget_spaces`, lever toute ambiguïté avec l’utilisateur puis transmettre explicitement l’identifiant. `add_expense` et `add_receipt_expense` acceptent une catégorie omise et classent alors la dépense dans la catégorie de secours du budget. Pour un ticket, ChatGPT doit montrer la proposition structurée et attendre une confirmation explicite avant l’écriture.
+Les treize outils portant sur les données acceptent `budget_space_id`. Sans ce paramètre, ils ciblent le budget personnel. Pour un budget partagé, ChatGPT doit d’abord appeler `list_budget_spaces`, lever toute ambiguïté avec l’utilisateur puis transmettre explicitement l’identifiant. `add_expense` et `add_receipt_expense` acceptent une catégorie omise et classent alors la dépense dans la catégorie de secours du budget. Pour un ticket, ChatGPT doit montrer la proposition structurée et attendre une confirmation explicite avant l’écriture. La suppression d’un plafond exige elle aussi une confirmation et ne touche jamais aux dépenses.
 
 Le serveur accepte le protocole MCP `2025-11-25` et la révision stateless `2026-07-28`.
 
@@ -256,8 +268,8 @@ npm run supabase:test
 npm run smoke:local
 ```
 
-- Vitest couvre les calculs de période, l’analyse déterministe des tickets et le contrat MCP.
-- pgTAP couvre le provisioning, l’idempotence, les agrégats, les invitations, l’adhésion, les tickets, leurs sommes, les transferts/suppressions atomiques, la catégorie de secours, les index et l’isolation personnelle/partagée par RLS.
+- Vitest couvre les calculs de période, l’analyse déterministe des tickets, les conseils de plafond et le contrat des quatorze outils MCP.
+- pgTAP exécute 126 assertions couvrant le provisioning, l’idempotence, les agrégats, les invitations, l’adhésion, les tickets, les plafonds, leurs calculs, l’historique après suppression de catégorie, les transferts/suppressions atomiques, la catégorie de secours, les index et l’isolation personnelle/partagée par RLS.
 - Le build web vérifie l’intégration Expo.
 
 Un build local et des tests protocole ne prouvent pas une connexion réelle depuis ChatGPT ni un lancement sur téléphone physique. Ces deux validations nécessitent le projet Supabase déployé, une URL HTTPS et une autorisation interactive.

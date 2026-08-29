@@ -14,6 +14,10 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 - [x] MCP métier authentifié par JWT/RLS, ciblage explicite du budget et écritures idempotentes.
 - [x] Tickets détaillés : OCR local, validation humaine, somme atomique et pôles produit.
 - [x] Outils MCP de ticket avec confirmation d’écriture et analyses filtrées.
+- [x] Plafonds mensuels par catégorie, calcul des dépassements et onglet Coach déterministe.
+- [x] Trois outils MCP de plafond avec ciblage du budget et suppression confirmée sans effet sur les dépenses.
+- [ ] Bilans Coach hebdomadaires/mensuels persistés et notifications anti-spam.
+- [ ] Coffre BYOK et reformulation IA structurée ; aucune clé OpenAI n’est actuellement nécessaire.
 - [ ] Parcours visuel complet validé sur un téléphone Android physique.
 - [ ] Parcours accessibilité vérifié avec TalkBack et taille de police agrandie.
 
@@ -21,11 +25,11 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 
 - [x] Migrations rejouables sur une base locale vierge.
 - [x] Tests pgTAP RLS et cycle de vie des espaces/comptes.
-- [x] Smoke tests HTTP des onze outils MCP, des tickets et de la suppression de compte avec un compte de production éphémère nettoyé.
+- [x] Smoke tests HTTP des quatorze outils MCP, des tickets, des plafonds et de la suppression de compte avec un compte éphémère nettoyé.
 - [x] Audit npm relu : aucune alerte haute ou critique. Les alertes modérées actuelles viennent de `uuid@7` via l’outil de build Expo `xcode`; le correctif forcé imposerait un downgrade incompatible et n’est pas appliqué.
 - [x] Projet Supabase de production `Budgetia` créé en région `eu-west-3`.
-- [x] Huit migrations appliquées et listées sur le projet distant, dont les tables de tickets et les index couvrant toutes les clés étrangères.
-- [x] Edge Functions `budgetia-mcp` et `delete-account` déployées et actives.
+- [x] Neuvième migration de plafonds appliquée et listée sur le projet distant, prouvée localement par 126 tests pgTAP.
+- [x] Edge Functions `budgetia-mcp` v6 et `delete-account` déployées et actives.
 - [x] Secret Edge Function `BUDGETIA_PUBLIC_SUPABASE_URL` configuré avec l’URL publique réelle.
 - [x] URL et clé publishable configurées dans les secrets GitHub du build APK ; aucune clé privilégiée n’est injectée dans Expo.
 - [x] Advisories relus : aucun défaut RLS ou clé étrangère non indexée ; treize avertissements `SECURITY DEFINER` correspondent aux RPC authentifiées explicitement contrôlées et documentées dans `SECURITY.md`.

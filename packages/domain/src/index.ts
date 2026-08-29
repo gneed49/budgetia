@@ -136,6 +136,114 @@ export interface SpendingSummary {
   previousTotalCents: number | null;
 }
 
+export type CategoryBudgetStatus = "healthy" | "watch" | "exceeded";
+
+export interface CategoryBudgetPosition {
+  limitId: string;
+  categoryId: string | null;
+  categoryName: string;
+  categoryColor: string;
+  categoryIcon: string;
+  month: string;
+  limitCents: number;
+  spentCents: number;
+  remainingCents: number;
+  percentage: number;
+  status: CategoryBudgetStatus;
+  previousSpentCents: number;
+  trendPercentage: number | null;
+  projectedCents: number;
+  categoryActive: boolean;
+}
+
+export interface BudgetCoachInsight {
+  id: string;
+  kind: "alert" | "watch" | "positive" | "info";
+  categoryId: string | null;
+  title: string;
+  message: string;
+  amountCents: number | null;
+}
+
+export function buildBudgetCoachInsights(
+  positions: readonly CategoryBudgetPosition[],
+): BudgetCoachInsight[] {
+  if (!positions.length) {
+    return [{
+      id: "limits-empty",
+      kind: "info",
+      categoryId: null,
+      title: "Commencez par un plafond",
+      message:
+        "Ajoutez un plafond à une catégorie pour obtenir un suivi et des conseils vérifiables.",
+      amountCents: null,
+    }];
+  }
+
+  const insights: BudgetCoachInsight[] = [];
+  for (const position of positions) {
+    if (position.status === "exceeded") {
+      insights.push({
+        id: `exceeded-${position.limitId}`,
+        kind: "alert",
+        categoryId: position.categoryId,
+        title: `${position.categoryName} dépasse son plafond`,
+        message: "Le plafond mensuel est dépassé. Ajustez ce poste ou compensez ailleurs.",
+        amountCents: Math.abs(position.remainingCents),
+      });
+      continue;
+    }
+    if (position.projectedCents > position.limitCents) {
+      insights.push({
+        id: `projected-${position.limitId}`,
+        kind: "watch",
+        categoryId: position.categoryId,
+        title: `${position.categoryName} pourrait dépasser`,
+        message: "Au rythme actuel, la projection de fin de mois dépasse le plafond.",
+        amountCents: position.projectedCents - position.limitCents,
+      });
+      continue;
+    }
+    if (position.status === "watch") {
+      insights.push({
+        id: `watch-${position.limitId}`,
+        kind: "watch",
+        categoryId: position.categoryId,
+        title: `${position.categoryName} est à surveiller`,
+        message: `${position.percentage.toFixed(1)} % du plafond mensuel est déjà utilisé.`,
+        amountCents: position.remainingCents,
+      });
+      continue;
+    }
+    if (
+      position.previousSpentCents > 0
+      && position.trendPercentage !== null
+      && position.trendPercentage <= -10
+    ) {
+      insights.push({
+        id: `improved-${position.limitId}`,
+        kind: "positive",
+        categoryId: position.categoryId,
+        title: `${position.categoryName} progresse`,
+        message: `Les dépenses baissent de ${Math.abs(position.trendPercentage).toFixed(1)} % par rapport au mois précédent.`,
+        amountCents: position.previousSpentCents - position.spentCents,
+      });
+    }
+  }
+
+  if (!insights.length) {
+    insights.push({
+      id: "limits-healthy",
+      kind: "positive",
+      categoryId: null,
+      title: "Plafonds sous contrôle",
+      message: "Aucune catégorie plafonnée n’atteint le seuil d’alerte de 75 %.",
+      amountCents: null,
+    });
+  }
+  return insights.slice(0, 5);
+}
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 86_400_000;
 const WEEKDAY_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];

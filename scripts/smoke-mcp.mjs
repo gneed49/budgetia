@@ -150,6 +150,9 @@ assert.deepEqual(
     "add_receipt_expense",
     "get_receipt_details",
     "get_product_breakdown",
+    "get_category_budget_positions",
+    "set_category_budget_limit",
+    "delete_category_budget_limit",
     "list_expenses",
     "get_spending_summary",
   ],
@@ -244,6 +247,27 @@ const productBreakdown = await legacyCall("tools/call", {
 });
 assert.equal(productBreakdown.result.structuredContent.breakdown.total, 9);
 assert.equal(productBreakdown.result.structuredContent.breakdown.product_groups.length, 2);
+
+const categoryLimit = await legacyCall("tools/call", {
+  name: "set_category_budget_limit",
+  arguments: { category: "Transport", amount: 10 },
+});
+assert.equal(categoryLimit.result.structuredContent.position.limit, 10);
+assert.equal(categoryLimit.result.structuredContent.position.spent, 8.4);
+assert.equal(categoryLimit.result.structuredContent.position.status, "watch");
+
+const categoryPositions = await legacyCall("tools/call", {
+  name: "get_category_budget_positions",
+  arguments: {},
+});
+assert.equal(categoryPositions.result.structuredContent.positions.length, 1);
+assert.equal(categoryPositions.result.structuredContent.positions[0].remaining, 1.6);
+
+const removedLimit = await legacyCall("tools/call", {
+  name: "delete_category_budget_limit",
+  arguments: { category: "Transport" },
+});
+assert.equal(removedLimit.result.structuredContent.deleted, true);
 
 const summary = await legacyCall("tools/call", {
   name: "get_spending_summary",
@@ -361,7 +385,7 @@ assert.deepEqual(discovered.result.supportedVersions, ["2026-07-28"]);
 assert.equal(discovered.result.resultType, "complete");
 
 const modernTools = await modernCall("tools/list");
-assert.equal(modernTools.result.tools.length, 11);
+assert.equal(modernTools.result.tools.length, 14);
 assert.equal(modernTools.result.cacheScope, "public");
 
 const cleanupResponse = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
@@ -380,5 +404,5 @@ assert.equal(
 );
 
 console.log(
-  `Budgetia MCP smoke test: ${skipOAuthDiscovery ? "resource metadata (OAuth server check skipped)," : "OAuth discovery/DCR,"} auth, personal/shared targeting, receipt details and product breakdown, fallback expense, category lifecycle, legacy, modern, idempotent write and cleanup passed.`,
+  `Budgetia MCP smoke test: ${skipOAuthDiscovery ? "resource metadata (OAuth server check skipped)," : "OAuth discovery/DCR,"} auth, personal/shared targeting, receipts, category limits, fallback expense, category lifecycle, legacy, modern, idempotent write and cleanup passed.`,
 );

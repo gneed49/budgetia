@@ -28,7 +28,13 @@ Le scan mobile fonctionne sans service IA distant : ML Kit sur Android et Vision
 
 Quand une personne joint volontairement une image à ChatGPT, ChatGPT peut la lire dans le cadre de cette conversation ; le MCP Budgetia ne reçoit toutefois que les lignes structurées après validation explicite. Aucun champ de la base ne permet de stocker une image ou le texte OCR brut.
 
-Les noms de commerçants, notes et libellés de produits restent des données non fiables. Le serveur MCP ordonne explicitement au client de ne jamais exécuter une instruction trouvée dans ces champs ; ceux-ci ne sont ni injectés dans une consigne système ni transmis automatiquement au futur coach budgétaire.
+Les noms de catégories, commerçants, notes et libellés de produits restent des données non fiables. Le serveur MCP ordonne explicitement au client de ne jamais exécuter une instruction trouvée dans ces champs ; ceux-ci ne sont ni injectés dans une consigne système ni transmis automatiquement au futur coach budgétaire.
+
+## Plafonds et Coach déterministe
+
+Les plafonds sont stockés en centimes avec l’espace, la catégorie, le mois et l’auteur. La base force le nom/couleur/icône depuis la catégorie active, normalise le mois, interdit de changer l’identité d’une ligne et applique la RLS à chaque lecture ou écriture. La fonction de position est `SECURITY INVOKER` : elle n’élève pas les privilèges.
+
+Le Coach livré ne contacte aucun modèle. Il reçoit uniquement les positions structurées calculées par PostgreSQL ; il ne lit ni notes, ni commerçants, ni libellés de tickets. La future IA devra recevoir des alias opaques et une sortie JSON fermée, comme défini dans `docs/BUDGET_COACH_DESIGN.md`.
 
 ## Fonctions PostgreSQL privilégiées
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildBudgetCoachInsights,
   classifyProductGroup,
   getPeriodRange,
   getPreviousPeriodRange,
@@ -9,6 +10,7 @@ import {
   parseReceiptText,
   summarizeExpenses,
   type Category,
+  type CategoryBudgetPosition,
   type Expense,
 } from "./index";
 
@@ -119,6 +121,71 @@ describe("period ranges", () => {
       startDate: "2024-02-01",
       endDate: "2024-02-29",
     });
+  });
+});
+
+describe("budget coach facts", () => {
+  const position = (
+    overrides: Partial<CategoryBudgetPosition>,
+  ): CategoryBudgetPosition => ({
+    limitId: "limit-food",
+    categoryId: "food",
+    categoryName: "Alimentation",
+    categoryColor: "#52B788",
+    categoryIcon: "wallet-outline",
+    month: "2026-08-01",
+    limitCents: 20000,
+    spentCents: 10000,
+    remainingCents: 10000,
+    percentage: 50,
+    status: "healthy",
+    previousSpentCents: 0,
+    trendPercentage: null,
+    projectedCents: 12000,
+    categoryActive: true,
+    ...overrides,
+  });
+
+  it("prioritizes an exact overrun without consuming free-text expenses", () => {
+    expect(
+      buildBudgetCoachInsights([
+        position({
+          spentCents: 23000,
+          remainingCents: -3000,
+          percentage: 115,
+          status: "exceeded",
+          projectedCents: 25000,
+        }),
+      ])[0],
+    ).toMatchObject({
+      kind: "alert",
+      categoryId: "food",
+      amountCents: 3000,
+      title: "Alimentation dépasse son plafond",
+    });
+  });
+
+  it("detects a projected overrun before the limit is reached", () => {
+    expect(
+      buildBudgetCoachInsights([
+        position({ projectedCents: 24000, status: "watch", percentage: 80 }),
+      ])[0],
+    ).toMatchObject({ kind: "watch", amountCents: 4000 });
+  });
+
+  it("reports an improvement and has a useful empty state", () => {
+    expect(
+      buildBudgetCoachInsights([
+        position({
+          spentCents: 7000,
+          remainingCents: 13000,
+          previousSpentCents: 10000,
+          trendPercentage: -30,
+          projectedCents: 9000,
+        }),
+      ])[0],
+    ).toMatchObject({ kind: "positive", amountCents: 3000 });
+    expect(buildBudgetCoachInsights([])[0]?.id).toBe("limits-empty");
   });
 });
 

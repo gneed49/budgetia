@@ -1,6 +1,12 @@
-# Plafonds par catégorie et coach budgétaire — conception V1
+# Plafonds par catégorie et coach budgétaire — état V1
 
-Ce document transforme l’idée en une fonctionnalité livrable sans rendre Budgetia inutilement complexe. Il ne prétend pas que le coach IA est déjà implémenté : il fixe le modèle, les garde-fous et les critères d’acceptation avant de toucher aux données financières ou à une clé fournisseur.
+La première fondation est livrée : plafonds mensuels partagés, positions calculées par PostgreSQL, recommandations déterministes, interface Coach et outils MCP. Le modèle IA, le coffre BYOK et les notifications planifiées ne sont pas encore activés ; les sections correspondantes restent le contrat de sécurité à respecter pour les lots suivants.
+
+## État de livraison
+
+- **Livré** : plafond par espace/catégorie/mois, sans report automatique ; RLS et audit ; dépensé/restant/dépassement ; seuils 75/100 % ; projection ; comparaison au mois précédent ; historique de catégorie supprimée ; onglet Coach ; accès MCP ; 126 tests pgTAP.
+- **Livré partiellement** : moteur de faits, limité pour l’instant aux positions de plafond, projection et tendance mensuelle.
+- **À livrer** : détection transparente des récurrences, bilans hebdomadaires/mensuels persistés, notifications anti-spam, coffre BYOK et reformulation IA structurée.
 
 ## 1. Plafond mensuel par catégorie
 
@@ -23,7 +29,7 @@ La catégorie « Non classée » peut recevoir un plafond afin de rendre visible
 
 La V1 n’applique aucun report automatique du restant ou du dépassement au mois suivant. Le nouveau mois reprend le plafond configuré, tandis que l’écart du mois précédent apparaît dans le bilan et dans la comparaison. Une option explicite de report pourra être étudiée ensuite avec trois règles possibles : aucun report, report du restant uniquement, ou report signé plafonné. Elle devra afficher un aperçu avant activation.
 
-### Données futures
+### Données livrées
 
 Le schéma cible peut être représenté ainsi :
 
@@ -37,7 +43,7 @@ budget_spaces
 expenses ── agrégation déterministe ── category_budget_positions
 ```
 
-`category_budget_positions` est une vue ou une fonction de lecture, pas une table modifiable. Les montants restent des entiers en centimes. La RLS vérifie l’appartenance à l’espace ; toute modification conserve l’auteur afin que les membres d’un budget commun comprennent qui a changé un plafond.
+`category_budget_positions` est la fonction de lecture `get_category_budget_positions`, pas une table modifiable. Les montants restent des entiers en centimes. La RLS vérifie l’appartenance à l’espace ; toute modification conserve l’auteur. Un instantané du nom, de la couleur et de l’icône maintient un mois explicable après suppression de la catégorie.
 
 ## 2. Moteur de faits financiers
 
@@ -100,13 +106,19 @@ La clé n’est placée ni dans `EXPO_PUBLIC_*`, ni dans SecureStore, ni dans l�
 
 ## 7. Ordre de livraison
 
-### Lot A — plafonds sans IA
+### Lot A1 — plafonds sans IA — livré
 
 - migration, RLS et tests pgTAP ;
 - réglage d’un plafond par mois et catégorie ;
 - cartes de progression, dépassement et comparaison ;
+- recommandations immédiates déterministes dans l’onglet Coach ;
+- lecture et gestion via le MCP.
+
+### Lot A2 — bilans et notifications — à livrer
+
 - bilan hebdomadaire/mensuel entièrement déterministe ;
-- préférences et notifications locales de seuil.
+- préférences et notifications locales de seuil ;
+- délais anti-spam, historique et actions utile/masquer/report.
 
 ### Lot B — coffre BYOK
 

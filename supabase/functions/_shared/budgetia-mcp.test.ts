@@ -5,11 +5,14 @@ import {
   normalizeCategoryName,
   parseAddExpense,
   parseAddReceiptExpense,
+  parseCategoryBudgetQuery,
+  parseDeleteCategoryBudgetLimit,
   parseDeleteCategory,
   parseListExpenses,
   parseProductBreakdown,
   parseReceiptDetails,
   parseSpaceSelection,
+  parseSetCategoryBudgetLimit,
   parseSummary,
   parseUpdateCategory,
   tools,
@@ -27,6 +30,9 @@ describe("Budgetia MCP contract", () => {
       "add_receipt_expense",
       "get_receipt_details",
       "get_product_breakdown",
+      "get_category_budget_positions",
+      "set_category_budget_limit",
+      "delete_category_budget_limit",
       "list_expenses",
       "get_spending_summary",
     ]);
@@ -82,6 +88,31 @@ describe("Budgetia MCP contract", () => {
       }),
     ).toEqual({ expenseId: "33333333-3333-4333-8333-333333333333" });
     expect(() => parseReceiptDetails({ expense_id: "unknown" })).toThrow("UUID");
+  });
+
+  it("parses monthly category limit reads, writes and removals", () => {
+    expect(parseCategoryBudgetQuery({}, "2026-08-29")).toEqual({
+      month: "2026-08-29",
+    });
+    expect(
+      parseSetCategoryBudgetLimit(
+        { category: "Alimentation", amount: 350.25, month: "2026-09-15" },
+        "2026-08-29",
+      ),
+    ).toEqual({
+      category: "Alimentation",
+      amountCents: 35025,
+      month: "2026-09-15",
+    });
+    expect(
+      parseDeleteCategoryBudgetLimit(
+        { category: "Alimentation" },
+        "2026-08-29",
+      ),
+    ).toEqual({ category: "Alimentation", month: "2026-08-29" });
+    expect(() =>
+      parseSetCategoryBudgetLimit({ category: "Alimentation", amount: 0 }),
+    ).toThrow("0,01");
   });
 
   it("parses a precise and retry-safe expense", () => {

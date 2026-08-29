@@ -3,6 +3,7 @@ import {
   normalizeCategoryName,
   parseMoneyToCents,
   type Category,
+  type CategoryBudgetPosition,
   type Expense,
   type Period,
   type ProductBreakdown,
@@ -167,6 +168,24 @@ interface CategoryDeleteRpcRow {
   transferToCategoryId: string | null;
 }
 
+interface CategoryBudgetPositionRow {
+  limit_id: string;
+  category_id: string | null;
+  category_name: string;
+  category_color: string;
+  category_icon: string;
+  month: string;
+  limit_cents: number;
+  spent_cents: number;
+  remaining_cents: number;
+  percentage: number;
+  status: "healthy" | "watch" | "exceeded";
+  previous_spent_cents: number;
+  trend_percentage: number | null;
+  projected_cents: number;
+  category_active: boolean;
+}
+
 const EXPENSE_COLUMNS =
   "id,amount_cents,category_id,note,spent_at,source,created_at,updated_at,category:categories!expenses_space_category_fkey(name,color,icon),receipt:receipts!receipts_space_expense_fkey(id)";
 
@@ -213,6 +232,29 @@ function mapCategory(row: CategoryRow): Category {
     isFallback: row.is_fallback,
     createdAt: row.created_at,
     archivedAt: row.archived_at,
+  };
+}
+
+function mapCategoryBudgetPosition(
+  row: CategoryBudgetPositionRow,
+): CategoryBudgetPosition {
+  return {
+    limitId: row.limit_id,
+    categoryId: row.category_id,
+    categoryName: row.category_name,
+    categoryColor: row.category_color,
+    categoryIcon: row.category_icon,
+    month: row.month,
+    limitCents: Number(row.limit_cents),
+    spentCents: Number(row.spent_cents),
+    remainingCents: Number(row.remaining_cents),
+    percentage: Number(row.percentage),
+    status: row.status,
+    previousSpentCents: Number(row.previous_spent_cents),
+    trendPercentage:
+      row.trend_percentage === null ? null : Number(row.trend_percentage),
+    projectedCents: Number(row.projected_cents),
+    categoryActive: row.category_active,
   };
 }
 
@@ -585,6 +627,55 @@ export class BudgetApi {
       affectedExpenseCount: Number(result.affectedExpenseCount),
       transferToCategoryId: result.transferToCategoryId,
     };
+  }
+
+  async listCategoryBudgetPositions(
+    referenceDate: string,
+  ): Promise<CategoryBudgetPosition[]> {
+    getPeriodRange("month", referenceDate);
+    const { data, error } = await supabase.rpc(
+      "get_category_budget_positions",
+      { p_space_id: this.spaceId, p_month: referenceDate },
+    );
+    if (error) {
+      throw toApiError(error, "Impossible de charger les plafonds par catégorie.");
+    }
+    return ((data ?? []) as CategoryBudgetPositionRow[]).map(
+      mapCategoryBudgetPosition,
+    );
+  }
+
+  async setCategoryBudgetLimit(input: {
+    categoryId: string;
+    referenceDate: string;
+    amount: string;
+  }): Promise<void> {
+    getPeriodRange("month", input.referenceDate);
+    const limitCents = parseMoneyToCents(input.amount);
+    const { error } = await supabase.rpc("set_category_budget_limit", {
+      p_space_id: this.spaceId,
+      p_category_id: input.categoryId,
+      p_month: input.referenceDate,
+      p_limit_cents: limitCents,
+    });
+    if (error) {
+      throw toApiError(error, "Impossible d’enregistrer ce plafond.");
+    }
+  }
+
+  async deleteCategoryBudgetLimit(input: {
+    categoryId: string;
+    referenceDate: string;
+  }): Promise<void> {
+    getPeriodRange("month", input.referenceDate);
+    const { error } = await supabase.rpc("delete_category_budget_limit", {
+      p_space_id: this.spaceId,
+      p_category_id: input.categoryId,
+      p_month: input.referenceDate,
+    });
+    if (error) {
+      throw toApiError(error, "Impossible de supprimer ce plafond.");
+    }
   }
 
   async listExpenses(input: {

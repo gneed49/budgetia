@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { todayISO, type Category, type Expense, type Period, type SpendingSummary } from "@budgetia/domain";
+import {
+  todayISO,
+  type Category,
+  type CategoryBudgetPosition,
+  type Expense,
+  type Period,
+  type SpendingSummary,
+} from "@budgetia/domain";
 
 import { BudgetApi, type BudgetSettings } from "./api";
 
@@ -110,4 +117,47 @@ export function useSummary(
   }, [api, period, referenceDate, categoryKey, refreshVersion]);
 
   return { summary, loading, error };
+}
+
+export function useCategoryBudgets(
+  api: BudgetApi,
+  referenceDate: string,
+  refreshVersion = 0,
+): {
+  positions: CategoryBudgetPosition[];
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+} {
+  const [positions, setPositions] = useState<CategoryBudgetPosition[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [version, setVersion] = useState(0);
+  const refresh = useCallback(() => setVersion((current) => current + 1), []);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
+    api
+      .listCategoryBudgetPositions(referenceDate)
+      .then((value) => {
+        if (active) setPositions(value);
+      })
+      .catch((reason: unknown) => {
+        if (active) {
+          setError(
+            reason instanceof Error ? reason.message : "Plafonds indisponibles.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [api, referenceDate, refreshVersion, version]);
+
+  return { positions, loading, error, refresh };
 }
