@@ -18,6 +18,7 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 - [x] Trois outils MCP de plafond avec ciblage du budget et suppression confirmée sans effet sur les dépenses.
 - [x] Bilans Coach hebdomadaires/mensuels persistés, alertes anti-spam et préférences privées.
 - [x] Coffre BYOK Vault, sortie IA structurée, repli déterministe et suppression autonome ; aucune clé OpenAI globale n’est nécessaire.
+- [x] Écran d’accès web validé en desktop et en `390×844` : aucun débordement, aucune erreur console, champs nommés pour les lecteurs d’écran et erreur de validation exposée comme alerte.
 - [ ] Parcours visuel complet validé sur un téléphone Android physique.
 - [ ] Parcours accessibilité vérifié avec TalkBack et taille de police agrandie.
 

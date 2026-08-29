@@ -92,10 +92,15 @@ export function AuthScreen(props: { oauthContinuation?: boolean }) {
         </Text>
 
         {error ? <ErrorBanner message={error} /> : null}
-        {message ? <Text style={styles.message}>{message}</Text> : null}
+        {message ? (
+          <Text accessibilityLiveRegion="polite" style={styles.message}>
+            {message}
+          </Text>
+        ) : null}
 
         <Text style={styles.label}>Adresse e-mail</Text>
         <TextInput
+          accessibilityLabel="Adresse e-mail"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -108,6 +113,7 @@ export function AuthScreen(props: { oauthContinuation?: boolean }) {
         />
         <Text style={styles.label}>Mot de passe</Text>
         <TextInput
+          accessibilityLabel="Mot de passe"
           value={password}
           onChangeText={setPassword}
           autoCapitalize="none"
