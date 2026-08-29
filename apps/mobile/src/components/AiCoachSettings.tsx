@@ -391,7 +391,13 @@ export function AiCoachSettings(props: {
             placeholderTextColor={colors.muted}
             style={styles.input}
           />
-          <Pressable onPress={() => setShowKey((current) => !current)} hitSlop={8}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={showKey ? "Masquer la clé API OpenAI" : "Afficher la clé API OpenAI"}
+            accessibilityState={{ expanded: showKey }}
+            onPress={() => setShowKey((current) => !current)}
+            hitSlop={8}
+          >
             <Ionicons name={showKey ? "eye-off-outline" : "eye-outline"} size={21} color={colors.muted} />
           </Pressable>
         </View>

@@ -283,7 +283,7 @@ npm run smoke:local
 ```
 
 - Vitest couvre les calculs de période, l’analyse déterministe des tickets, la frontière anti-injection du Coach et le contrat des seize outils MCP.
-- pgTAP exécute 167 assertions couvrant aussi les rapports privés, la file planifiée, Vault, le secret Cron, les alertes anti-spam et l’isolation par utilisateur dans un budget partagé.
+- pgTAP exécute 172 assertions couvrant aussi les rapports privés, la file planifiée, Vault, le secret Cron, les alertes anti-spam et l’isolation par utilisateur dans un budget partagé.
 - Le build web vérifie l’intégration Expo.
 
 Un build local et des tests protocole ne prouvent pas une connexion réelle depuis ChatGPT ni un lancement sur téléphone physique. Ces deux validations nécessitent le projet Supabase déployé, une URL HTTPS et une autorisation interactive.

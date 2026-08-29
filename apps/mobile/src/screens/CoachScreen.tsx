@@ -319,6 +319,7 @@ export function CoachScreen(props: {
                 <Text style={styles.notificationBody}>{notification.body}</Text>
               </View>
               <Pressable
+                accessibilityRole="button"
                 accessibilityLabel="Masquer cette alerte"
                 onPress={() => void dismissNotification(notification.id)}
                 hitSlop={8}
@@ -447,10 +448,20 @@ export function CoachScreen(props: {
                         );
                       })}
                       <View style={styles.reportActions}>
-                        <Pressable onPress={() => void reactToReport(report.id, { helpful: true })}>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Marquer ce bilan comme utile"
+                          accessibilityState={{ selected: report.helpful === true }}
+                          onPress={() => void reactToReport(report.id, { helpful: true })}
+                        >
                           <Ionicons name={report.helpful === true ? "thumbs-up" : "thumbs-up-outline"} size={19} color={colors.mintDark} />
                         </Pressable>
-                        <Pressable onPress={() => void reactToReport(report.id, { helpful: false })}>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Marquer ce bilan comme non utile"
+                          accessibilityState={{ selected: report.helpful === false }}
+                          onPress={() => void reactToReport(report.id, { helpful: false })}
+                        >
                           <Ionicons name={report.helpful === false ? "thumbs-down" : "thumbs-down-outline"} size={19} color={colors.muted} />
                         </Pressable>
                         <Pressable onPress={() => void reactToReport(report.id, { snoozeDays: 7 })}>
@@ -648,7 +659,12 @@ export function CoachScreen(props: {
                         <Pressable onPress={() => edit(position)} hitSlop={8}>
                           <Text style={styles.actionLink}>Modifier</Text>
                         </Pressable>
-                        <Pressable onPress={() => confirmDelete(position)} hitSlop={8}>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Supprimer le plafond ${position.categoryName}`}
+                          onPress={() => confirmDelete(position)}
+                          hitSlop={8}
+                        >
                           <Ionicons name="trash-outline" size={17} color={colors.coral} />
                         </Pressable>
                       </View>
