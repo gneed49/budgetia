@@ -1,0 +1,37 @@
+name: Production public smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_run:
+    workflows: ["Budgetia web production"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: budgetia-production-public-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Verify public production surfaces
+        env:
+          BUDGETIA_WEB_URL: ${{ vars.BUDGETIA_WEB_URL }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+        run: node scripts/smoke-production-public.mjs

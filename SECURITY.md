@@ -4,7 +4,7 @@ Budgetia considère l’APK, le bundle web et le dépôt Git comme publics. Aucu
 
 ## Valeurs publiques autorisées
 
-Seules `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` et l’identifiant public facultatif `EXPO_PUBLIC_EAS_PROJECT_ID` peuvent être compilés dans l’application. Ils identifient des projets clients mais n’accordent aucun privilège administratif ; la session Auth et les politiques RLS protègent les données.
+Seules `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `EXPO_PUBLIC_BUDGETIA_WEB_URL` et l’identifiant public facultatif `EXPO_PUBLIC_EAS_PROJECT_ID` peuvent être compilés dans l’application. Ils identifient des projets et pages publics mais n’accordent aucun privilège administratif ; la session Auth et les politiques RLS protègent les données.
 
 Chaque personne qui reprend le dépôt doit fournir sa propre URL et sa propre clé publishable. Le dépôt ne contient pas les valeurs de production de Budgetia.
 

@@ -8,8 +8,15 @@ on:
       - "packages/**"
       - "package.json"
       - "package-lock.json"
+      - "docs/legal/**"
+      - "scripts/audit-public-artifacts.mjs"
       - ".github/workflows/web-pages.yml"
   workflow_dispatch:
+    inputs:
+      ref:
+        description: "Commit, branch or tag to deploy"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -33,6 +40,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref || github.sha }}
 
       - name: Set up Node
         uses: actions/setup-node@v7
@@ -48,15 +56,18 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_BUDGETIA_WEB_URL: ${{ vars.BUDGETIA_WEB_URL }}
         run: |
           [[ "$EXPO_PUBLIC_SUPABASE_URL" =~ ^https://[a-z0-9]{20}\.supabase\.co$ ]]
           [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" =~ ^sb_publishable_[A-Za-z0-9_-]{20,}$ ]]
+          [[ "$EXPO_PUBLIC_BUDGETIA_WEB_URL" =~ ^https://[^[:space:]]+$ ]]
 
       - name: Export the Expo web app
         working-directory: apps/mobile
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_BUDGETIA_WEB_URL: ${{ vars.BUDGETIA_WEB_URL }}
           EXPO_PUBLIC_EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
           NODE_ENV: production
         run: npx expo export --platform web --clear
@@ -67,7 +78,12 @@ jobs:
           mkdir -p apps/mobile/dist/oauth/consent
           cp apps/mobile/dist/index.html apps/mobile/dist/oauth/consent/index.html
           cp apps/mobile/dist/index.html apps/mobile/dist/404.html
+          mkdir -p apps/mobile/dist/legal
+          cp -R docs/legal/. apps/mobile/dist/legal/
           touch apps/mobile/dist/.nojekyll
+
+      - name: Audit the public website bundle
+        run: node scripts/audit-public-artifacts.mjs --path apps/mobile/dist
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6

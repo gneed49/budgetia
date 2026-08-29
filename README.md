@@ -75,7 +75,7 @@ cp .env.example .env
 cp apps/mobile/.env.example apps/mobile/.env
 ```
 
-Dans `.env` et `apps/mobile/.env`, copiez l’URL locale dans `EXPO_PUBLIC_SUPABASE_URL` et la clé publique locale (`ANON_KEY` ou publishable key) dans `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Le premier fichier sert au smoke test MCP, le second à Expo. Ces valeurs identifient le projet mais ne remplacent jamais la RLS. Ne copiez jamais une secret key ou une clé `service_role` dans l’app.
+Dans `.env` et `apps/mobile/.env`, copiez l’URL locale dans `EXPO_PUBLIC_SUPABASE_URL`, la clé publique locale (`ANON_KEY` ou publishable key) dans `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, et l’origine HTTPS publique de votre propre déploiement dans `EXPO_PUBLIC_BUDGETIA_WEB_URL`. Le premier fichier sert aux smokes, le second à Expo. Ces valeurs identifient des surfaces publiques mais ne remplacent jamais la RLS. Ne copiez jamais une secret key ou une clé `service_role` dans l’app.
 
 Lancez ensuite :
 
@@ -150,7 +150,7 @@ En production, activez les confirmations e-mail, configurez un SMTP fiable et, s
 - `https://gneed49.github.io/budgetia/` ;
 - `https://gneed49.github.io/budgetia/oauth/consent`.
 
-Le chemin de base `/budgetia` est défini dans `apps/mobile/app.json`. Un fork renommé doit l’adapter au nom de son dépôt GitHub Pages. Les secrets Actions ne sont jamais copiés dans un fork : chaque déploiement doit fournir sa propre URL Supabase et sa propre clé publishable.
+Le chemin de base `/budgetia` est défini dans `apps/mobile/app.json`. Un fork renommé doit l’adapter au nom de son dépôt GitHub Pages et définir sa propre variable `BUDGETIA_WEB_URL`. Les secrets et variables Actions ne sont jamais copiés dans un fork : chaque déploiement doit fournir ses propres URLs et sa propre clé publishable.
 
 Build :
 
@@ -186,6 +186,7 @@ Le premier build interactif crée ou sélectionne les credentials Android distan
 | --- | --- |
 | `EXPO_PUBLIC_SUPABASE_URL` | URL HTTPS publique du projet Supabase |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | clé publishable Supabase à faibles privilèges |
+| `EXPO_PUBLIC_BUDGETIA_WEB_URL` | origine HTTPS publique de ce déploiement, sans slash final |
 
 Ajoutez enfin dans **GitHub → Settings → Secrets and variables → Actions** :
 
@@ -201,12 +202,16 @@ Chaque build `main` crée une GitHub Release marquée **préversion**, avec l’
 
 ### APK Gradle de secours
 
-Pour que l’APK accède au projet Supabase de production, ajoutez ces deux valeurs dans **GitHub → Settings → Secrets and variables → Actions → Secrets** du dépôt, puis relancez le workflow ou poussez un commit :
+Pour que l’APK accède au projet Supabase de production, ajoutez ces deux valeurs dans **GitHub → Settings → Secrets and variables → Actions → Secrets** du dépôt et la variable publique ci-dessous dans **Variables**, puis relancez le workflow ou poussez un commit :
 
 | Secret GitHub | Valeur autorisée |
 | --- | --- |
 | `EXPO_PUBLIC_SUPABASE_URL` | URL HTTPS publique du projet Supabase |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clé publishable Supabase (ou `anon` legacy à privilèges faibles) |
+
+| Variable GitHub | Valeur autorisée |
+| --- | --- |
+| `BUDGETIA_WEB_URL` | origine HTTPS publique de votre déploiement, par exemple `https://compte.github.io/budgetia` |
 
 Une URL de projet et une clé publishable sont intégrées dans l’APK par conception : elles ne donnent pas accès aux dépenses sans session utilisateur et politiques RLS. Ne stockez jamais `service_role`, `sb_secret_*`, `SUPABASE_DB_URL`, une chaîne PostgreSQL, un mot de passe, une clé de signature Android ou `EXPO_TOKEN` dans l’application ou dans le dépôt.
 

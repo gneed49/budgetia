@@ -243,6 +243,10 @@ if [[ ! "$BUDGETIA_WEB_URL" =~ ^https://[^[:space:]]+$ ]]; then
   exit 1
 fi
 set_var BUDGETIA_WEB_URL "${BUDGETIA_WEB_URL%/}"
+ENV_FILE=".env"
+write_env EXPO_PUBLIC_BUDGETIA_WEB_URL "${BUDGETIA_WEB_URL%/}"
+ENV_FILE="apps/mobile/.env"
+write_env EXPO_PUBLIC_BUDGETIA_WEB_URL "${BUDGETIA_WEB_URL%/}"
 set_var SUPABASE_PRODUCTION_ENABLED "false"
 if confirm "Configure privileged Supabase CI credentials now?"; then
   open_url "https://supabase.com/dashboard/account/tokens"

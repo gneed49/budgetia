@@ -32,6 +32,7 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 - [x] Edge Functions `budgetia-mcp` v8, `delete-account` v4 et `budgetia-ai-coach` v2 déployées et actives.
 - [x] Secret Edge Function `BUDGETIA_PUBLIC_SUPABASE_URL` configuré avec l’URL publique réelle.
 - [x] URL et clé publishable configurées dans les secrets GitHub du build APK ; aucune clé privilégiée n’est injectée dans Expo.
+- [x] Audit automatique des fichiers suivis, de l’historique Git, du bundle web et de l’APK compilé contre les formats de secrets à haut niveau de confiance.
 - [x] Linter Supabase local sur `public,private` sans erreur ni avertissement ; les RPC `SECURITY DEFINER` sont réparties entre surface authentifiée contrôlée et worker `service_role`, comme documenté dans `SECURITY.md`.
 - [x] Cron Coach actif toutes les cinq minutes avec secret worker généré et chiffré dans Vault.
 - [ ] Push Expo validé sur un téléphone physique avec `EAS_PROJECT_ID` ; le jeton de sécurité push serveur reste facultatif.
@@ -63,7 +64,7 @@ Le script `./scripts/configure-production.sh` guide la configuration reproductib
 - [x] APK local généré avec JDK 21 / Android 36 et signature APK v2 vérifiée.
 - [ ] Projet EAS créé avec `eas init` et `EAS_PROJECT_ID` enregistré comme variable GitHub.
 - [ ] Premier build `preview` interactif réussi et credentials Android distants créés.
-- [ ] Variables `EXPO_PUBLIC_SUPABASE_*` configurées dans les environnements EAS `preview` et `production`.
+- [ ] Variables `EXPO_PUBLIC_SUPABASE_*` et `EXPO_PUBLIC_BUDGETIA_WEB_URL` configurées dans les environnements EAS `preview` et `production`.
 - [ ] `EXPO_TOKEN` ajouté comme secret GitHub et workflow EAS activé avec `EAS_PRODUCTION_ENABLED=true`.
 - [ ] APK EAS installé et testé sur un appareil réel.
 - [ ] Trois tickets réels (net, froissé et faible lumière) scannés, corrigés puis rouverts sur appareil.
@@ -74,6 +75,7 @@ Le script `./scripts/configure-production.sh` guide la configuration reproductib
 
 - [x] Build web Expo déployé sur GitHub Pages ; racine, route `/budgetia/oauth/consent` et bundle JavaScript vérifiés en `200`.
 - [x] Découverte OAuth, enregistrement dynamique d’un client public et redirection PKCE `302` vers l’écran de consentement vérifiés en production.
+- [x] Smoke public sans identifiant privilégié configuré chaque jour et après le déploiement web : app, pages légales, OAuth et refus des fonctions sans authentification.
 - [ ] Connexion, consentement, refus et révocation OAuth validés sur l’URL de production.
 - [ ] MCP ajouté dans ChatGPT et appels réels validés avec deux comptes et un budget commun.
 - [ ] Première clé OpenAI utilisateur validée depuis l’app ; volontairement non testée pendant l’implémentation à la demande du propriétaire.
@@ -82,12 +84,14 @@ Le script `./scripts/configure-production.sh` guide la configuration reproductib
 
 ## 5. Légal, support et exploitation
 
-- [x] Pages de confidentialité et conditions présentes et déployables avec GitHub Pages.
+- [x] Pages de confidentialité, conditions et support intégrées au même artefact GitHub Pages que l’application.
 - [ ] Identité légale du responsable du traitement ajoutée aux pages.
-- [ ] Adresse de contact privée dédiée ajoutée ; aucun utilisateur n’est invité à publier ses finances dans une issue publique.
+- [x] Aucun utilisateur n’est invité à publier ses finances dans une issue publique ; la page support bloque explicitement cet usage.
+- [ ] Adresse de contact privée dédiée ajoutée.
 - [ ] Durées de conservation, région d’hébergement et sous-traitants confirmés dans la politique finale.
-- [ ] Procédure de réponse aux incidents et canal support testés.
-- [ ] Compte de test, procédure de rollback et responsable de publication identifiés.
+- [x] Procédures techniques d’incident, publication et rollback documentées dans `docs/OPERATIONS.md`.
+- [ ] Canal support privé et procédure d’escalade testés.
+- [ ] Compte de test et responsable de publication identifiés.
 
 ## 6. Validation avant tag
 
@@ -101,7 +105,7 @@ npm run smoke:local
 
 Puis :
 
-1. vérifier silencieusement les fichiers suivis contre les secrets (`service_role`, `sb_secret_`, mots de passe, URL PostgreSQL, jetons Expo) ;
+1. exécuter `npm run audit:secrets` puis vérifier silencieusement l’historique Git et l’artefact Android contre les secrets (`service_role`, `sb_secret_`, mots de passe, URL PostgreSQL, jetons Expo) ;
 2. pousser sur `main` et ouvrir les résumés des workflows Supabase CI, Android APK et Android EAS ;
 3. télécharger et installer l’APK exact produit par le run ;
 4. créer le tag correspondant exactement à `expo.version`, par exemple `v1.0.0` ;

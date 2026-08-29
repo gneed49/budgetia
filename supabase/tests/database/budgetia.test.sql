@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(167);
+select plan(172);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -1279,6 +1279,64 @@ select is(
 );
 
 reset role;
+
+insert into auth.users (
+  id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data
+) values (
+  '33333333-3333-4333-8333-333333333333',
+  'authenticated', 'authenticated', 'solo@budgetia.test', '', now(),
+  '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","email":"solo@budgetia.test"}',
+  true
+);
+select lives_ok(
+  $$select public.create_shared_budget('Budget sans successeur')$$,
+  'a sole owner can create a shared budget before account deletion'
+);
+select set_config(
+  'test.solo_shared_space_id',
+  (select id::text from public.budget_spaces where name = 'Budget sans successeur'),
+  true
+);
+select lives_ok(
+  $$select public.create_budgetia_expense(
+    1250,
+    (select id from public.categories
+     where space_id = current_setting('test.solo_shared_space_id')::uuid
+       and is_fallback),
+    'Dépense du budget sans successeur',
+    '2026-08-28',
+    'mobile',
+    'solo-owner-expense',
+    current_setting('test.solo_shared_space_id')::uuid
+  )$$,
+  'the sole-owner shared budget can contain expenses'
+);
+
+reset role;
+select lives_ok(
+  $$delete from auth.users where id = '33333333-3333-4333-8333-333333333333'$$,
+  'deleting a sole owner also removes a shared budget without a successor'
+);
+select is(
+  (select count(*)::integer from public.budget_spaces
+   where name = 'Budget sans successeur'),
+  0,
+  'a shared budget without a successor is deleted'
+);
+select is(
+  (select count(*)::integer from public.expenses
+   where request_id = 'solo-owner-expense'),
+  0,
+  'expenses from the shared budget without a successor are deleted by cascade'
+);
 
 select lives_ok(
   $$delete from auth.users where id = '11111111-1111-4111-8111-111111111111'$$,

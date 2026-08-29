@@ -17,9 +17,16 @@ import {
   useThemeStyles,
 } from "../theme";
 
-const privacyUrl = "https://gneed49.github.io/budgetia/privacy.html";
-const termsUrl = "https://gneed49.github.io/budgetia/terms.html";
-const supportUrl = "https://github.com/gneed49/budgetia/issues";
+const publicWebUrl = process.env.EXPO_PUBLIC_BUDGETIA_WEB_URL?.trim().replace(/\/+$/, "");
+
+function publicLegalUrl(page: string): string | null {
+  if (!publicWebUrl || !/^https:\/\/[^/]+/.test(publicWebUrl)) return null;
+  return `${publicWebUrl}/legal/${page}`;
+}
+
+const privacyUrl = publicLegalUrl("privacy.html");
+const termsUrl = publicLegalUrl("terms.html");
+const supportUrl = publicLegalUrl("support.html");
 
 export function DataPrivacySection(props: {
   api: BudgetApi;
@@ -45,6 +52,19 @@ export function DataPrivacySection(props: {
     } finally {
       setBusy(false);
     }
+  }
+
+  function openPublicPage(url: string | null): void {
+    if (!url) {
+      Alert.alert(
+        "Page indisponible",
+        "L’URL publique Budgetia doit être configurée par l’éditeur de cette version.",
+      );
+      return;
+    }
+    void Linking.openURL(url).catch(() => {
+      Alert.alert("Page indisponible", "Impossible d’ouvrir cette page pour le moment.");
+    });
   }
 
   async function prepareDeletion(): Promise<void> {
@@ -104,9 +124,9 @@ export function DataPrivacySection(props: {
         <Text style={styles.outlineText}>Exporter « {props.spaceName} » en CSV</Text>
       </Pressable>
       <View style={styles.links}>
-        <Pressable onPress={() => void Linking.openURL(privacyUrl)}><Text style={styles.link}>Confidentialité</Text></Pressable>
-        <Pressable onPress={() => void Linking.openURL(termsUrl)}><Text style={styles.link}>Conditions</Text></Pressable>
-        <Pressable onPress={() => void Linking.openURL(supportUrl)}><Text style={styles.link}>Support</Text></Pressable>
+        <Pressable onPress={() => openPublicPage(privacyUrl)}><Text style={styles.link}>Confidentialité</Text></Pressable>
+        <Pressable onPress={() => openPublicPage(termsUrl)}><Text style={styles.link}>Conditions</Text></Pressable>
+        <Pressable onPress={() => openPublicPage(supportUrl)}><Text style={styles.link}>Support</Text></Pressable>
       </View>
 
       <View style={styles.dangerBox}>
