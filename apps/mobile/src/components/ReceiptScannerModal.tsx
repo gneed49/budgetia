@@ -329,6 +329,7 @@ export function ReceiptScannerModal(props: {
 
               <Text style={styles.label}>Commerçant</Text>
               <TextInput
+                accessibilityLabel="Commerçant"
                 value={merchant}
                 onChangeText={setMerchant}
                 maxLength={80}
@@ -359,12 +360,18 @@ export function ReceiptScannerModal(props: {
               <View style={styles.fieldRow}>
                 <View style={styles.fieldHalf}>
                   <Text style={styles.label}>Date</Text>
-                  <TextInput value={spentAt} onChangeText={setSpentAt} style={styles.input} />
+                  <TextInput
+                    accessibilityLabel="Date du ticket au format année mois jour"
+                    value={spentAt}
+                    onChangeText={setSpentAt}
+                    style={styles.input}
+                  />
                 </View>
                 <View style={styles.fieldHalf}>
                   <Text style={styles.label}>Total imprimé</Text>
                   <View style={[styles.totalInput, !totalsMatch && printedTotal ? styles.totalMismatch : null]}>
                     <TextInput
+                      accessibilityLabel="Total imprimé du ticket"
                       value={printedTotal}
                       onChangeText={setPrintedTotal}
                       keyboardType="decimal-pad"
@@ -407,6 +414,7 @@ export function ReceiptScannerModal(props: {
                     <View style={styles.lineTop}>
                       <Text style={styles.lineNumber}>{index + 1}</Text>
                       <TextInput
+                        accessibilityLabel={`Nom du produit, ligne ${index + 1}`}
                         value={line.label}
                         onChangeText={(value) => updateLine(line.key, { label: value })}
                         maxLength={120}
@@ -416,6 +424,7 @@ export function ReceiptScannerModal(props: {
                       />
                       <View style={styles.lineAmountBox}>
                         <TextInput
+                          accessibilityLabel={`Montant du produit, ligne ${index + 1}`}
                           value={line.amount}
                           onChangeText={(value) => updateLine(line.key, { amount: value })}
                           keyboardType="decimal-pad"
@@ -473,6 +482,7 @@ export function ReceiptScannerModal(props: {
 
               <Text style={styles.label}>Note (facultative)</Text>
               <TextInput
+                accessibilityLabel="Note du ticket"
                 value={note}
                 onChangeText={setNote}
                 maxLength={160}

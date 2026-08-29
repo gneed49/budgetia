@@ -187,6 +187,7 @@ export function CategoryManagerModal(props: {
           >
             <Text style={styles.label}>Nom</Text>
             <TextInput
+              accessibilityLabel="Nom de la catégorie"
               value={name}
               onChangeText={setName}
               maxLength={40}

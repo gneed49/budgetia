@@ -93,6 +93,8 @@ export function SharedBudgetManager(props: {
               {isOwner && member.role === "editor" ? (
                 <View style={styles.rowActions}>
                   <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Transférer la propriété à ${member.email}`}
                     disabled={busy}
                     onPress={() =>
                       confirm(
@@ -109,6 +111,8 @@ export function SharedBudgetManager(props: {
                     <Ionicons name="key-outline" size={18} color={colors.mintDark} />
                   </Pressable>
                   <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Retirer ${member.email} du budget`}
                     disabled={busy}
                     onPress={() =>
                       confirm(
@@ -135,6 +139,7 @@ export function SharedBudgetManager(props: {
         <>
           <View style={styles.inline}>
             <TextInput
+              accessibilityLabel="Nouveau nom du budget"
               value={name}
               onChangeText={setName}
               maxLength={50}
@@ -162,6 +167,7 @@ export function SharedBudgetManager(props: {
               Toutes ses dépenses et catégories seront supprimées. Saisissez exactement « {props.space.name} ».
             </Text>
             <TextInput
+              accessibilityLabel="Confirmation du nom du budget à supprimer"
               value={deleteConfirmation}
               onChangeText={setDeleteConfirmation}
               placeholder={props.space.name}

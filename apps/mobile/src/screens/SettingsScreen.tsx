@@ -345,6 +345,7 @@ export function SettingsScreen(props: {
         </View>
 
         <TextInput
+          accessibilityLabel="Nom du nouveau budget commun"
           value={sharedName}
           onChangeText={setSharedName}
           placeholder="Ex. Budget du couple"
@@ -369,6 +370,7 @@ export function SettingsScreen(props: {
           <View style={styles.inviteBox}>
             <Text style={styles.label}>Inviter dans « {props.activeSpace.name} »</Text>
             <TextInput
+              accessibilityLabel="Adresse e-mail de la personne à inviter"
               value={inviteEmail}
               onChangeText={setInviteEmail}
               autoCapitalize="none"
@@ -450,6 +452,7 @@ export function SettingsScreen(props: {
         </Text>
         <View style={styles.inlineField}>
           <TextInput
+            accessibilityLabel="Budget mensuel en euros"
             value={budget}
             onChangeText={setBudget}
             keyboardType="decimal-pad"
@@ -515,6 +518,7 @@ export function SettingsScreen(props: {
           );})}
         </View>
         <TextInput
+          accessibilityLabel="Nom de la nouvelle catégorie"
           value={categoryName}
           onChangeText={setCategoryName}
           placeholder="Nom de la nouvelle catégorie"

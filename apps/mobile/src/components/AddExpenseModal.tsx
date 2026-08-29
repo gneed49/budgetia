@@ -235,6 +235,7 @@ export function AddExpenseModal(props: {
 
             <Text style={styles.label}>Note (facultative)</Text>
             <TextInput
+              accessibilityLabel="Note de la dépense"
               value={note}
               onChangeText={setNote}
               maxLength={160}

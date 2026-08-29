@@ -144,6 +144,7 @@ export function DataPrivacySection(props: {
               Saisissez SUPPRIMER pour confirmer.
             </Text>
             <TextInput
+              accessibilityLabel="Confirmation de suppression du compte"
               value={confirmation}
               onChangeText={setConfirmation}
               autoCapitalize="characters"
