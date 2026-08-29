@@ -28,19 +28,22 @@ Cette checklist sépare ce qui est prouvé par le dépôt de ce qui nécessite u
 - [x] Smoke tests HTTP des seize outils MCP, du Coach sans clé, des tickets, des plafonds et de la suppression de compte avec un compte éphémère nettoyé.
 - [x] Audit npm relu : aucune alerte haute ou critique. Les alertes modérées actuelles viennent de `uuid@7` via l’outil de build Expo `xcode`; le correctif forcé imposerait un downgrade incompatible et n’est pas appliqué.
 - [x] Projet Supabase de production `Budgetia` créé en région `eu-west-3`.
-- [x] Dixième migration Coach rejouée sur une base locale vierge, prouvée par 167 tests pgTAP et appliquée au projet distant.
+- [x] Dixième migration Coach rejouée sur une base locale vierge, prouvée par 172 tests pgTAP et appliquée au projet distant.
 - [x] Edge Functions `budgetia-mcp` v8, `delete-account` v4 et `budgetia-ai-coach` v2 déployées et actives.
 - [x] Secret Edge Function `BUDGETIA_PUBLIC_SUPABASE_URL` configuré avec l’URL publique réelle.
 - [x] URL et clé publishable configurées dans les secrets GitHub du build APK ; aucune clé privilégiée n’est injectée dans Expo.
 - [x] Audit automatique des fichiers suivis, de l’historique Git, du bundle web et de l’APK compilé contre les formats de secrets à haut niveau de confiance.
-- [x] Linter Supabase local sur `public,private` sans erreur ni avertissement ; les RPC `SECURITY DEFINER` sont réparties entre surface authentifiée contrôlée et worker `service_role`, comme documenté dans `SECURITY.md`.
+- [x] Linter Supabase local sur `public,private` sans erreur ; les avertissements Security Advisor distants sur les RPC `SECURITY DEFINER` authentifiées sont attendus, revus et documentés dans `SECURITY.md` au lieu d’être masqués.
+- [x] SSL imposé aux connexions PostgreSQL externes et état vérifié en production.
 - [x] Cron Coach actif toutes les cinq minutes avec secret worker généré et chiffré dans Vault.
 - [ ] Push Expo validé sur un téléphone physique avec `EAS_PROJECT_ID` ; le jeton de sécurité push serveur reste facultatif.
 - [x] Serveur OAuth 2.1 Supabase et enregistrement dynamique activés ; découverte officielle vérifiée en production avec une réponse `200`.
 - [x] URL HTTPS GitHub Pages enregistrée comme Site URL Auth et `/oauth/consent` configuré comme chemin d’autorisation.
 - [ ] Confirmations e-mail activées et SMTP de production testé.
-- [ ] Protection CAPTCHA et limites Auth évaluées selon l’exposition publique.
-- [ ] Sauvegardes et restauration Supabase testées selon le plan retenu.
+- [x] Protection CAPTCHA et limites Auth évaluées : inscriptions anonymes désactivées, limites Auth conservées, CAPTCHA non activé sans flux de jeton client et fournisseur configuré.
+- [ ] Fournisseur CAPTCHA, clé de site et secret configurés avant toute inscription commerciale publique.
+- [x] État des sauvegardes audité : archivage WAL indiqué actif, mais aucune sauvegarde restaurable ni PITR disponible sur l’offre actuelle.
+- [ ] Politique de sauvegarde/PITR choisie et restauration testée dans un projet isolé.
 
 Le workflow `Supabase production` peut automatiser migrations et fonctions après création de :
 
@@ -80,7 +83,7 @@ Le script `./scripts/configure-production.sh` guide la configuration reproductib
 - [ ] MCP ajouté dans ChatGPT et appels réels validés avec deux comptes et un budget commun.
 - [ ] Première clé OpenAI utilisateur validée depuis l’app ; volontairement non testée pendant l’implémentation à la demande du propriétaire.
 - [ ] Test de lecture, ajout avec confirmation, retry idempotent, filtre et synthèse effectué.
-- [ ] Les journaux de production ne contiennent ni Bearer token, ni note de dépense, ni donnée financière inutile.
+- [x] Audit agrégé Auth/API/Edge Functions des dernières 24 h : aucun Bearer token, secret privilégié, champ financier, mot de passe/URL PostgreSQL ou `5xx` détecté ; aucun journal brut n’a été affiché.
 
 ## 5. Légal, support et exploitation
 

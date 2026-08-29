@@ -20,11 +20,13 @@
     "smoke:local": "node scripts/run-local-smokes.mjs",
     "smoke:production:public": "node scripts/smoke-production-public.mjs",
     "audit:secrets": "node scripts/audit-public-artifacts.mjs --self-test --tracked",
+    "audit:production:supabase": "node scripts/audit-supabase-platform.mjs",
     "check": "npm-run-all typecheck test audit:secrets",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm-run-all test:workspaces test:mcp",
+    "test": "npm-run-all test:workspaces test:mcp test:platform-audit",
     "test:workspaces": "npm run test --workspaces --if-present",
     "test:mcp": "vitest run supabase/functions",
+    "test:platform-audit": "node scripts/audit-supabase-platform.mjs --self-test",
     "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {

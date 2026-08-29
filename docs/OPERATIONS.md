@@ -9,16 +9,27 @@ Ce document décrit les actions techniques reproductibles. Il ne remplace pas le
 - MCP : `https://VOTRE_REF.supabase.co/functions/v1/budgetia-mcp` ;
 - smoke public : `npm run smoke:production:public` avec `BUDGETIA_WEB_URL` et `EXPO_PUBLIC_SUPABASE_URL` ;
 - audit des sources publiques : `npm run audit:secrets` ; le workflow Android ajoute l’historique Git et le contenu décompressé de l’APK.
+- audit plateforme Supabase : `SUPABASE_PROJECT_REF=... npm run audit:production:supabase` ; ce contrôle en lecture seule échoue si SSL n’est pas imposé ou si aucune sauvegarde restaurable/PITR n’est exposée.
 
 Le workflow `Production public smoke` contrôle chaque jour et après un déploiement web : pages, documents légaux, découverte OAuth, challenge MCP et refus des appels non authentifiés au Coach et à la suppression de compte.
+
+## État plateforme vérifié le 29 août 2026
+
+- le projet de production est sur l’offre Free, en région `eu-west-3` ;
+- SSL est imposé aux connexions PostgreSQL externes ;
+- l’archivage WAL est indiqué comme actif, mais aucune sauvegarde logique/physique et aucun PITR ne sont disponibles dans l’état remonté : l’ouverture commerciale reste bloquée jusqu’au choix d’une politique de sauvegarde et à un test de restauration isolé ;
+- les plages directes PostgreSQL restent `0.0.0.0/0` et `::/0` pour les runners GitHub à adresses dynamiques. Les restreindre aujourd’hui casserait l’automatisation ; une sortie CI fixe ou un chemin de déploiement sans accès direct permettra de les fermer ;
+- les avertissements Security Advisor sur les RPC `SECURITY DEFINER` authentifiées sont attendus et couverts par validations d’identité, permissions explicites et pgTAP ; chaque nouvelle occurrence reste à revoir ;
+- un contrôle agrégé des journaux Auth, API et Edge Functions sur les dernières 24 heures n’a trouvé ni Bearer token, ni clé privilégiée, ni champ financier, ni URL de base/mot de passe et aucune réponse `5xx`. L’audit n’a pas affiché le contenu brut des journaux.
 
 ## Publication
 
 1. Exécuter `npm ci`, `npm run check`, `npm run build` et les tests Supabase.
-2. Relire les migrations et le diff staged.
-3. Pousser sur `main` : le workflow Android crée une préversion APK permanente.
-4. Attendre les workflows web et smoke public avant d’activer une nouvelle intégration ChatGPT.
-5. Pour Google Play, publier uniquement l’AAB EAS signé avec la clé de production distante.
+2. Exécuter l’audit plateforme en lecture seule. Le workflow de production refuse toute mutation si SSL est désactivé ou si aucune restauration n’est possible.
+3. Relire les migrations et le diff staged.
+4. Pousser sur `main` : le workflow Android crée une préversion APK permanente.
+5. Attendre les workflows web et smoke public avant d’activer une nouvelle intégration ChatGPT.
+6. Pour Google Play, publier uniquement l’AAB EAS signé avec la clé de production distante.
 
 ## Rollback applicatif et web
 

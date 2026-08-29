@@ -8,6 +8,7 @@ on:
       - "supabase/functions/**"
       - "supabase/config.toml"
       - "scripts/configure-supabase-oauth.mjs"
+      - "scripts/audit-supabase-platform.mjs"
       - ".github/workflows/supabase-production.yml"
   workflow_dispatch:
 
@@ -47,6 +48,12 @@ jobs:
           test -n "$SUPABASE_ACCESS_TOKEN"
           test -n "$SUPABASE_DB_PASSWORD"
           test -n "$SUPABASE_PROJECT_REF"
+
+      - name: Enforce production platform gates before mutation
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: npm run audit:production:supabase
 
       - name: Link production project
         env:

@@ -8,6 +8,8 @@ Seules `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `EXPO
 
 Chaque personne qui reprend le dépôt doit fournir sa propre URL et sa propre clé publishable. Le dépôt ne contient pas les valeurs de production de Budgetia.
 
+En production, Supabase impose SSL aux connexions PostgreSQL externes. L’accès direct à la base reste actuellement autorisé depuis les plages IP publiques afin de ne pas casser les runners GitHub dynamiques ; cette exposition n’accorde aucun accès sans identifiants PostgreSQL et doit être réduite dès qu’une sortie réseau fixe est disponible. L’application mobile et le MCP passent par les API Supabase, Auth et les politiques RLS, jamais par une chaîne de connexion embarquée.
+
 ## Secrets interdits dans le client et le dépôt
 
 - clé Supabase `service_role` ou `sb_secret_*` ;
@@ -42,7 +44,7 @@ Les rapports sont privés par `user_id`, y compris dans un espace partagé. Les 
 
 ## Fonctions PostgreSQL privilégiées
 
-Les RPC `SECURITY DEFINER` accessibles au rôle `authenticated` sont limitées aux opérations atomiques qui vérifient l’identité et l’appartenance : gestion d’un espace partagé, invitations, membres, cycle de compte, tickets, plafonds et demandes Coach. Les fonctions de worker, de Vault, de file et de Cron révoquent explicitement `authenticated` et sont accordées seulement à `service_role`. Le linter local des schémas `public,private` ne remonte aucune erreur ni alerte.
+Les RPC `SECURITY DEFINER` accessibles au rôle `authenticated` sont limitées aux opérations atomiques qui vérifient l’identité et l’appartenance : gestion d’un espace partagé, invitations, membres, cycle de compte, tickets, plafonds et demandes Coach. Les fonctions de worker, de Vault, de file et de Cron révoquent explicitement `authenticated` et sont accordées seulement à `service_role`. Le linter local des schémas `public,private` ne remonte pas d’erreur. Le Security Advisor distant signale volontairement ces RPC exécutables par `authenticated` : ces avertissements attendus sont suivis individuellement et ne sont pas présentés comme un audit sans avertissement.
 
 Cette exception n’est acceptable que tant que chaque RPC :
 
@@ -54,6 +56,8 @@ Cette exception n’est acceptable que tant que chaque RPC :
 - reste couverte par les tests pgTAP d’accès croisé.
 
 Le détail du linter est documenté dans la [checklist de production](docs/PRODUCTION_CHECKLIST.md). Toute nouvelle fonction privilégiée doit être revue séparément ; l’avertissement ne doit jamais être ignoré globalement.
+
+La protection Auth contre les mots de passe compromis s’appuie sur Have I Been Pwned et n’est disponible que sur les offres Supabase compatibles. Le projet de production est actuellement sur l’offre Free : cette protection n’y est donc pas activable et reste un gate de montée en gamme avant une commercialisation publique.
 
 ## Configuration reproductible
 
